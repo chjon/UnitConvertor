@@ -1,9 +1,15 @@
 class UnitError(Exception): pass
 
 class Unit:
+	def isBaseUnit(self):
+		return sym != None and len(baseUnits) == 0
+
+	def isDerivedUnit(self):
+		return sym != None and len(baseUnits) > 0
+
 	def reduce(self):
 		tmp1 = {}
-		if len(self.baseUnits) == 0: tmp1[self.sym] = 1
+		if self.isBaseUnit(): tmp1[self.sym] = 1
 		for sym, exp in self.baseUnits.items():
 			if sym in tmp1:
 				tmp1[sym] += exp
