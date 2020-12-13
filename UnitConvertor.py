@@ -9,6 +9,7 @@ L3_DELIMITER = ' '
 def loadConversions(filename):
 	units = {}
 	conversions = {}
+	prefixes = {}
 	file = open(filename, 'r')
 	lines = [ line[0:-1] for line in file.readlines() ]
 	for line in lines:
@@ -19,6 +20,15 @@ def loadConversions(filename):
 			if not sym.isalpha():
 				raise FileFormatError(f"Improper format: units must be alphabetical, received '{sym}'")
 			units[sym] = Unit(sym)
+		elif len(components) == 2:
+			# Create prefix mapping
+			base = float(components[0])
+			prefixMapping = {}
+			baseExpPairs = components[1].split(L2_DELIMITER)
+			for baseExpPair in baseExpPairs:
+				prefix, exp = baseExpPair.split(L3_DELIMITER)
+				prefixMapping[prefix] = int(exp)
+			prefixes[base] = prefixMapping
 		elif len(components) == 3:
 			# Create derived unit
 			sym = components[0]
@@ -41,14 +51,24 @@ def loadConversions(filename):
 			raise FileFormatError(f"Improper format: expected 3 components, received {len(components)}")
 
 	file.close()
-	return units, conversions
+	return units, conversions, prefixes
 
-def writeConversions(filename, units, conversions):
+def writeConversions(filename, units, conversions, prefixes):
 	file = open(filename, 'w')
+
+	# Write exponents
+	for base, prefixMapping in prefixes.items():
+		prefixStr = ''
+		for prefix, exp in prefixMapping.items():
+			prefixStr += f"{prefix}{L3_DELIMITER}{exp}{L2_DELIMITER}"
+		file.write(f"{base}{L1_DELIMITER}{prefixStr}\n")		
+
 	for sym, unit in units.items():
 		if len(unit.baseUnits) == 0:
+			# Write base units
 			file.write(f"{sym}\n")
 		else:
+			# Write derived units
 			baseUnitStr = ''
 			for baseUnitSym, exponent in unit.baseUnits.items():
 				baseUnitStr += f"{baseUnitSym}{L3_DELIMITER}{exponent}{L2_DELIMITER}"
@@ -76,24 +96,25 @@ class Convertor:
 			self.topologicalSortVisit(derivedUnit, toSort, sortedValues, visited)
 		return sortedValues
 		
-	def __init__(self, units = {}, conversions = {}):
+	def __init__(self, units = {}, conversions = {}, prefixes = {}):
 		self.units = units
 		self.conversions = conversions
+		self.prefixes = prefixes
 	
-	def factorUnits(self, commonUnits, srcUnits, dstUnits):
-		localCommonUnits = {}
+	def processPrefixes(self, srcUnits, dstUnits):
+		scaleFactor = 1
+		return scaleFactor
+
+	def factorUnits(self, srcUnits, dstUnits):
 		# Find common factors
+		commonUnits = {}
 		for srcUnitSym, srcUnitExp in srcUnits.items():
 			if srcUnitSym in dstUnits:
-				if not (srcUnitSym in localCommonUnits): localCommonUnits[srcUnitSym] = 0
-				localCommonUnits[srcUnitSym] += min(srcUnitExp, dstUnits[srcUnitSym])
+				if not (srcUnitSym in commonUnits): commonUnits[srcUnitSym] = 0
+				commonUnits[srcUnitSym] += min(srcUnitExp, dstUnits[srcUnitSym])
 
-		for commonUnitSym, commonUnitExp in localCommonUnits.items():
-			# Add to the list of common factors
-			if not (commonUnitSym in commonUnits): commonUnits[commonUnitSym] = 0
-			commonUnits[commonUnitSym] += commonUnitExp
-
-			# Factor out common factors
+		# Factor out common factors
+		for commonUnitSym, commonUnitExp in commonUnits.items():
 			srcUnits[commonUnitSym] -= commonUnitExp
 			dstUnits[commonUnitSym] -= commonUnitExp
 			if srcUnits[commonUnitSym] == 0: srcUnits.pop(commonUnitSym)
@@ -118,7 +139,6 @@ class Convertor:
 		return scaleFactor
 
 	def convert(self, srcUnit, dstUnit):
-		commonUnits = {}
 		srcUnits = srcUnit.reduce()
 		dstUnits = dstUnit.reduce()
 
@@ -126,8 +146,11 @@ class Convertor:
 		performedReduction = True
 		scaleFactor = 1
 		while performedReduction:
+			# Simplify units using SI prefixes
+			scaleFactor *= self.processPrefixes(srcUnits, dstUnits)
+
 			# Factor out common units and perform a topological sort to find the next unit to reduce
-			self.factorUnits(commonUnits, srcUnits, dstUnits)
+			self.factorUnits(srcUnits, dstUnits)
 			unitsToReduce = self.topologicalSort([*srcUnits.keys()] + [*dstUnits.keys()])
 
 			# Reduce units
