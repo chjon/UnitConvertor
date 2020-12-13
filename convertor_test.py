@@ -4,13 +4,13 @@ from UnitConvertor import *
 def test_conversion(verbose = False):
 	test_result = 0
 	units, conversions, prefixes = loadConversions("standard.csv")
-	# writeConversions("test2.csv", units, conversions)
+	# writeConversions("test.csv", units, conversions, prefixes)
 
 	# Test topological sort
 	convertor = Convertor(units, conversions, prefixes)
 	print(convertor.convert(
-		Unit("mph"),
-		Unit(baseUnits={"yd": 1, "min": -1})
+		Unit("N"),
+		Unit(baseUnits={"kg": 1, "m": 1, "s": -2})
 	))
 
 	return test_result

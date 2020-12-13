@@ -22,7 +22,7 @@ def loadConversions(filename):
 			units[sym] = Unit(sym)
 		elif len(components) == 2:
 			# Create prefix mapping
-			base = float(components[0])
+			base = int(components[0])
 			prefixMapping = {}
 			baseExpPairs = components[1].split(L2_DELIMITER)
 			for baseExpPair in baseExpPairs:
@@ -61,7 +61,7 @@ def writeConversions(filename, units, conversions, prefixes):
 		prefixStr = ''
 		for prefix, exp in prefixMapping.items():
 			prefixStr += f"{prefix}{L3_DELIMITER}{exp}{L2_DELIMITER}"
-		file.write(f"{base}{L1_DELIMITER}{prefixStr}\n")		
+		file.write(f"{base}{L1_DELIMITER}{prefixStr[0:-1]}\n")		
 
 	for sym, unit in units.items():
 		if len(unit.baseUnits) == 0:
@@ -101,8 +101,37 @@ class Convertor:
 		self.conversions = conversions
 		self.prefixes = prefixes
 	
-	def processPrefixes(self, srcUnits, dstUnits):
+	def processPrefixes(self, units):
 		scaleFactor = 1
+		unitsToUpdate = {}
+		for candidateSym, candidateExp in units.items():
+			# Find longest matching suffix
+			longestSuffix = ""
+			for sym in self.units.keys():
+				if candidateSym.endswith(sym) and len(sym) > len(longestSuffix):
+					longestSuffix = sym
+					if len(longestSuffix) == len(candidateSym): break
+
+			if len(longestSuffix) == len(candidateSym): continue
+
+			# Calculate scale factor
+			prefix = candidateSym[0:len(candidateSym)-len(longestSuffix)]
+			foundPrefix = False
+			for base, candidatePrefixMapping in self.prefixes.items():
+				if foundPrefix: break
+				for candidatePrefix, exp in candidatePrefixMapping.items():
+					if prefix == candidatePrefix:
+						unitsToUpdate[candidateSym] = longestSuffix
+						scaleFactor *= base**(candidateExp * exp)
+						foundPrefix = True
+						break
+			
+		# Update unit map
+		for fromSym, toSym in unitsToUpdate.items():
+			if not (toSym in units): units[toSym] = 0
+			units[toSym] += units[fromSym]
+			units.pop(fromSym)
+
 		return scaleFactor
 
 	def factorUnits(self, srcUnits, dstUnits):
@@ -147,7 +176,8 @@ class Convertor:
 		scaleFactor = 1
 		while performedReduction:
 			# Simplify units using SI prefixes
-			scaleFactor *= self.processPrefixes(srcUnits, dstUnits)
+			scaleFactor *= self.processPrefixes(srcUnits)
+			scaleFactor /= self.processPrefixes(dstUnits)
 
 			# Factor out common units and perform a topological sort to find the next unit to reduce
 			self.factorUnits(srcUnits, dstUnits)
