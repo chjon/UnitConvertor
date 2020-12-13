@@ -82,31 +82,35 @@ class Convertor:
 	
 	def factorUnits(self, commonUnits, srcUnits, dstUnits):
 		localCommonUnits = {}
+		# Find common factors
 		for srcUnitSym, srcUnitExp in srcUnits.items():
 			if srcUnitSym in dstUnits:
 				if not (srcUnitSym in localCommonUnits): localCommonUnits[srcUnitSym] = 0
 				localCommonUnits[srcUnitSym] += min(srcUnitExp, dstUnits[srcUnitSym])
+
 		for commonUnitSym, commonUnitExp in localCommonUnits.items():
+			# Add to the list of common factors
+			if not (commonUnitSym in commonUnits): commonUnits[commonUnitSym] = 0
+			commonUnits[commonUnitSym] += commonUnitExp
+
+			# Factor out common factors
 			srcUnits[commonUnitSym] -= commonUnitExp
 			dstUnits[commonUnitSym] -= commonUnitExp
 			if srcUnits[commonUnitSym] == 0: srcUnits.pop(commonUnitSym)
 			if dstUnits[commonUnitSym] == 0: dstUnits.pop(commonUnitSym)
-			if not (commonUnitSym in commonUnits): commonUnits[commonUnitSym] = 0
-			commonUnits[commonUnitSym] += commonUnitExp
 	
 	def reduceUnit(self, reducedUnitSym, srcUnits, dstUnits):
 		scaleFactor = 1
-		if reducedUnitSym in srcUnits:
-			unitMap = srcUnits
-			if reducedUnitSym in self.conversions:
-				scaleFactor *= self.conversions[reducedUnitSym]**srcUnits[reducedUnitSym]
-		else:
-			unitMap = dstUnits
-			if reducedUnitSym in self.conversions:
-				scaleFactor /= self.conversions[reducedUnitSym]**dstUnits[reducedUnitSym]
-		
-		reducedUnitExp = unitMap[reducedUnitSym]
-		unitMap.pop(reducedUnitSym)
+		unitMap = srcUnits if reducedUnitSym in srcUnits else dstUnits
+
+		# Calculate scale factor
+		if reducedUnitSym in self.conversions:
+			tmp = self.conversions[reducedUnitSym]**unitMap[reducedUnitSym]
+			if reducedUnitSym in srcUnits: scaleFactor *= tmp
+			else: scaleFactor /= tmp
+
+		# Reduce unit
+		reducedUnitExp = unitMap.pop(reducedUnitSym)
 		for sym, exp in self.units[reducedUnitSym].baseUnits.items():
 			if not (sym in unitMap): unitMap[sym] = 0
 			unitMap[sym] += reducedUnitExp * exp
