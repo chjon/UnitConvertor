@@ -2,19 +2,21 @@ class UnitError(Exception): pass
 
 class Unit:
 	def isBaseUnit(self):
-		return sym != None and len(baseUnits) == 0
+		return self.sym != None and len(self.baseUnits) == 0
 
 	def isDerivedUnit(self):
-		return sym != None and len(baseUnits) > 0
+		return len(self.baseUnits) > 0
 
 	def reduce(self):
 		tmp1 = {}
-		if self.isBaseUnit(): tmp1[self.sym] = 1
-		for sym, exp in self.baseUnits.items():
-			if sym in tmp1:
-				tmp1[sym] += exp
-			else:
-				tmp1[sym] = exp
+		if self.sym != None:
+			tmp1[self.sym] = 1
+		else:
+			for sym, exp in self.baseUnits.items():
+				if sym in tmp1:
+					tmp1[sym] += exp
+				else:
+					tmp1[sym] = exp
 		
 		tmp2 = {}
 		for sym, exp in tmp1.items():
