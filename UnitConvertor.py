@@ -80,6 +80,39 @@ class Convertor:
 		self.units = units
 		self.conversions = conversions
 	
+	def factorUnits(self, commonUnits, srcUnits, dstUnits):
+		localCommonUnits = {}
+		for srcUnitSym, srcUnitExp in srcUnits.items():
+			if srcUnitSym in dstUnits:
+				if not (srcUnitSym in localCommonUnits): localCommonUnits[srcUnitSym] = 0
+				localCommonUnits[srcUnitSym] += min(srcUnitExp, dstUnits[srcUnitSym])
+		for commonUnitSym, commonUnitExp in localCommonUnits.items():
+			srcUnits[commonUnitSym] -= commonUnitExp
+			dstUnits[commonUnitSym] -= commonUnitExp
+			if srcUnits[commonUnitSym] == 0: srcUnits.pop(commonUnitSym)
+			if dstUnits[commonUnitSym] == 0: dstUnits.pop(commonUnitSym)
+			if not (commonUnitSym in commonUnits): commonUnits[commonUnitSym] = 0
+			commonUnits[commonUnitSym] += commonUnitExp
+	
+	def reduceUnit(self, reducedUnitSym, srcUnits, dstUnits):
+		scaleFactor = 1
+		if reducedUnitSym in srcUnits:
+			unitMap = srcUnits
+			if reducedUnitSym in self.conversions:
+				scaleFactor *= self.conversions[reducedUnitSym]**srcUnits[reducedUnitSym]
+		else:
+			unitMap = dstUnits
+			if reducedUnitSym in self.conversions:
+				scaleFactor /= self.conversions[reducedUnitSym]**dstUnits[reducedUnitSym]
+		
+		reducedUnitExp = unitMap[reducedUnitSym]
+		unitMap.pop(reducedUnitSym)
+		for sym, exp in self.units[reducedUnitSym].baseUnits.items():
+			if not (sym in unitMap): unitMap[sym] = 0
+			unitMap[sym] += reducedUnitExp * exp
+		
+		return scaleFactor
+
 	def convert(self, srcUnit, dstUnit):
 		commonUnits = {}
 		srcUnits = srcUnit.reduce()
@@ -89,46 +122,16 @@ class Convertor:
 		performedReduction = True
 		scaleFactor = 1
 		while performedReduction:
-			# Factor out common units
-			localCommonUnits = {}
-			for srcUnitSym, srcUnitExp in srcUnits.items():
-				if srcUnitSym in dstUnits:
-					if not (srcUnitSym in localCommonUnits): localCommonUnits[srcUnitSym] = 0
-					localCommonUnits[srcUnitSym] += min(srcUnitExp, dstUnits[srcUnitSym])
-			for commonUnitSym, commonUnitExp in localCommonUnits.items():
-				srcUnits[commonUnitSym] -= commonUnitExp
-				dstUnits[commonUnitSym] -= commonUnitExp
-				if srcUnits[commonUnitSym] == 0: srcUnits.pop(commonUnitSym)
-				if dstUnits[commonUnitSym] == 0: dstUnits.pop(commonUnitSym)
-				if not (commonUnitSym in commonUnits): commonUnits[commonUnitSym] = 0
-				commonUnits[commonUnitSym] += localCommonUnits[commonUnitSym]
-
-			# Perform a topological sort to find the next unit to reduce
-			unitsToReduce = []
-			for sym in srcUnits.keys(): unitsToReduce.append(sym)
-			for sym in dstUnits.keys(): unitsToReduce.append(sym)
-			unitsToReduce = self.topologicalSort(unitsToReduce)
+			# Factor out common units and perform a topological sort to find the next unit to reduce
+			self.factorUnits(commonUnits, srcUnits, dstUnits)
+			unitsToReduce = self.topologicalSort([*srcUnits.keys()] + [*dstUnits.keys()])
 
 			# Reduce units
 			if len(unitsToReduce) == 0: break
 			performedReduction = self.units[unitsToReduce[0]].isDerivedUnit()
-			if performedReduction:
-				reducedUnitSym = unitsToReduce[0]
-				if reducedUnitSym in srcUnits:
-					unitMap = srcUnits
-					if reducedUnitSym in self.conversions:
-						scaleFactor *= self.conversions[reducedUnitSym]**srcUnits[reducedUnitSym]
-				else:
-					unitMap = dstUnits
-					if reducedUnitSym in self.conversions:
-						scaleFactor /= self.conversions[reducedUnitSym]**dstUnits[reducedUnitSym]
-				
-				reducedUnitExp = unitMap[reducedUnitSym]
-				unitMap.pop(reducedUnitSym)
-				for sym, exp in self.units[reducedUnitSym].baseUnits.items():
-					if not (sym in unitMap): unitMap[sym] = 0
-					unitMap[sym] += reducedUnitExp * exp
+			if performedReduction: scaleFactor *= self.reduceUnit(unitsToReduce[0], srcUnits, dstUnits)
 		
+		# Check for conversion error
 		if len(srcUnits) > 0 or len(dstUnits) > 0:
 			raise UnitError(f"Invalid conversion: {str(srcUnit)} to {str(dstUnit)}")
 
