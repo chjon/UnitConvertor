@@ -6,8 +6,8 @@ def test_fail(msg, verbose):
 
 def test_equality(verbose = False):
 	test_result = 0
-	unit_m = Unit({"m": 1})
-	unit_g = Unit({"g": 1})
+	unit_m = Unit("m")
+	unit_g = Unit("g")
 	q1 = Quantity(1, unit_m)
 	q2 = Quantity(1, unit_m)
 	q3 = Quantity(1, unit_g)
@@ -28,7 +28,7 @@ def test_equality(verbose = False):
 		test_result += test_fail("inequality of unequal units", verbose)
 
 	# Test equality of equivalent units
-	if not (Quantity(1, Unit({"m": 0})) == Quantity(1, Unit({}))):
+	if not (Quantity(1, Unit(baseUnits = {"m": 0})) == Quantity(1, Unit(baseUnits = {}))):
 		test_result += test_fail("equality of equivalent units", verbose)
 
 	# Test value inequality
@@ -42,9 +42,9 @@ def test_equality(verbose = False):
 
 def test_addition(verbose = False):
 	test_result = 0
-	unit_m1 = Unit({"m": 1})
-	unit_m2 = Unit({"m": 2})
-	unit_g = Unit({"g": 1})
+	unit_g = Unit("g")
+	unit_m1 = Unit("m")
+	unit_m2 = Unit(baseUnits = {"m": 2})
 
 	# Try adding two values with the same unit
 	if Quantity(1, unit_m1) + Quantity(1, unit_m1) != Quantity(2, unit_m1):
@@ -80,18 +80,18 @@ def test_addition(verbose = False):
 
 def test_multiplication(verbose = False):
 	test_result = 0
-	unit_m = Unit({"m": 1})
-	unit_g = Unit({"g": 1})
+	unit_m = Unit("m")
+	unit_g = Unit("g")
 	q1 = Quantity(4, unit_m)
 	q2 = Quantity(2, unit_m)
 	q3 = Quantity(2, unit_g)
 
 	# Try multiplying two values with the same unit
-	if q1 * q2 != Quantity(8, Unit({"m": 2})):
+	if q1 * q2 != Quantity(8, Unit(baseUnits = {"m": 2})):
 		test_result += test_fail("multiplying two values with the same unit", verbose)
 	
 	# Try multiplying two values with different units
-	if q1 * q3 != Quantity(8, Unit({"m": 1, "g": 1})):
+	if q1 * q3 != Quantity(8, Unit(baseUnits = {"m": 1, "g": 1})):
 		test_result += test_fail("multiplying two values with different units", verbose)
 	
 	# Try dividing two values with the same unit
@@ -99,7 +99,7 @@ def test_multiplication(verbose = False):
 		test_result += test_fail("dividing two values with the same unit", verbose)
 	
 	# Try dividing two values with different units
-	if q1 / q3 != Quantity(2, Unit({"m": 1, "g": -1})):
+	if q1 / q3 != Quantity(2, Unit(baseUnits = {"m": 1, "g": -1})):
 		test_result += test_fail("dividing two values with different units", verbose)
 
 	return test_result
