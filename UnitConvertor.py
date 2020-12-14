@@ -79,6 +79,7 @@ def writeConversions(filename, units, conversions, prefixes):
 class Convertor:
 	# Topological sort implemented using DFS
 	def topologicalSortVisit(self, derivedUnit: str, toSort: list, sortedValues: list, visited: set):
+		prefix, derivedUnit = self.stripPrefix(derivedUnit)
 		if derivedUnit in visited: return
 		visited[derivedUnit] = True
 
@@ -101,30 +102,33 @@ class Convertor:
 		self.conversions = conversions
 		self.prefixes = prefixes
 	
+	def stripPrefix(self, prefixedSym):
+		# Find longest matching suffix
+		longestSuffix = ""
+		for sym in self.units.keys():
+			if prefixedSym.endswith(sym) and len(sym) > len(longestSuffix):
+				longestSuffix = sym
+				if len(longestSuffix) == len(prefixedSym): break
+		
+		prefix = prefixedSym[0:len(prefixedSym)-len(longestSuffix)]
+		return prefix, longestSuffix
+
+	def getPrefixScaleFactor(self, prefix):
+		for base, candidatePrefixMapping in self.prefixes.items():
+			for candidatePrefix, exp in candidatePrefixMapping.items():
+				if prefix == candidatePrefix: return (base)**(exp)
+
 	def processPrefixes(self, units):
 		scaleFactor = 1
 		unitsToUpdate = {}
-		for candidateSym, candidateExp in units.items():
-			# Find longest matching suffix
-			longestSuffix = ""
-			for sym in self.units.keys():
-				if candidateSym.endswith(sym) and len(sym) > len(longestSuffix):
-					longestSuffix = sym
-					if len(longestSuffix) == len(candidateSym): break
-
-			if len(longestSuffix) == len(candidateSym): continue
+		for prefixedSym, exp in units.items():
+			# Find prefix and base unit
+			prefix, baseUnit = self.stripPrefix(prefixedSym)
+			if len(prefix) == 0: continue
+			unitsToUpdate[prefixedSym] = baseUnit
 
 			# Calculate scale factor
-			prefix = candidateSym[0:len(candidateSym)-len(longestSuffix)]
-			foundPrefix = False
-			for base, candidatePrefixMapping in self.prefixes.items():
-				if foundPrefix: break
-				for candidatePrefix, exp in candidatePrefixMapping.items():
-					if prefix == candidatePrefix:
-						unitsToUpdate[candidateSym] = longestSuffix
-						scaleFactor *= base**(candidateExp * exp)
-						foundPrefix = True
-						break
+			scaleFactor *= self.getPrefixScaleFactor(prefix)**(exp)
 			
 		# Update unit map
 		for fromSym, toSym in unitsToUpdate.items():
