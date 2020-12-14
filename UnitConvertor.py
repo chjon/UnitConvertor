@@ -110,8 +110,8 @@ class Convertor:
 				longestSuffix = sym
 				if len(longestSuffix) == len(prefixedSym): break
 		
-		prefix = prefixedSym[0:len(prefixedSym)-len(longestSuffix)]
-		return prefix, longestSuffix
+		if len(longestSuffix) == 0: raise UnitError(f"Invalid unit: received '{prefixedSym}'")
+		return prefixedSym[0:len(prefixedSym)-len(longestSuffix)], longestSuffix
 
 	def getPrefixScaleFactor(self, prefix):
 		for base, candidatePrefixMapping in self.prefixes.items():
@@ -153,15 +153,12 @@ class Convertor:
 			if srcUnits[commonUnitSym] == 0: srcUnits.pop(commonUnitSym)
 			if dstUnits[commonUnitSym] == 0: dstUnits.pop(commonUnitSym)
 	
-	def reduceUnit(self, reducedUnitSym, srcUnits, dstUnits):
-		scaleFactor = 1
-		unitMap = srcUnits if reducedUnitSym in srcUnits else dstUnits
-
+	def reduceUnit(self, reducedUnitSym, unitMap):
 		# Calculate scale factor
+		scaleFactor = 1
 		if reducedUnitSym in self.conversions:
-			tmp = self.conversions[reducedUnitSym]**unitMap[reducedUnitSym]
-			if reducedUnitSym in srcUnits: scaleFactor *= tmp
-			else: scaleFactor /= tmp
+			tmp = (self.conversions[reducedUnitSym])**(unitMap[reducedUnitSym])
+			scaleFactor *= tmp
 
 		# Reduce unit
 		reducedUnitExp = unitMap.pop(reducedUnitSym)
@@ -169,6 +166,12 @@ class Convertor:
 			if not (sym in unitMap): unitMap[sym] = 0
 			unitMap[sym] += reducedUnitExp * exp
 		
+		# Remove cancelled units
+		toRemove = []
+		for sym, exp in unitMap.items():
+			if exp == 0: toRemove.append(sym)
+		for sym in toRemove: unitMap.pop(sym)
+
 		return scaleFactor
 
 	def convert(self, srcUnit, dstUnit):
@@ -190,7 +193,9 @@ class Convertor:
 			# Reduce units
 			if len(unitsToReduce) == 0: break
 			performedReduction = self.units[unitsToReduce[0]].isDerivedUnit()
-			if performedReduction: scaleFactor *= self.reduceUnit(unitsToReduce[0], srcUnits, dstUnits)
+			if performedReduction:
+				if unitsToReduce[0] in srcUnits: scaleFactor *= self.reduceUnit(unitsToReduce[0], srcUnits)
+				else: scaleFactor /= self.reduceUnit(unitsToReduce[0], dstUnits)
 		
 		# Check for conversion error
 		if len(srcUnits) > 0 or len(dstUnits) > 0:
