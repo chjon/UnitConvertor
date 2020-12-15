@@ -1,5 +1,6 @@
 from Unit import *
 from UnitConvertor import *
+import UnitParser
 
 def test_conversion(verbose = False):
 	test_result = 0
@@ -9,8 +10,8 @@ def test_conversion(verbose = False):
 	# Test topological sort
 	convertor = Convertor(units, conversions, prefixes)
 	print(convertor.convert(
-		Unit("N"),
-		Unit(baseUnits={"kg": 1, "m": 1, "s": -2})
+		Unit(baseUnits=UnitParser.parseUnit("uJ^-2")),
+		Unit(baseUnits=UnitParser.parseUnit("eV^-1 kW^-1 hr^-1"))
 	))
 
 	return test_result
