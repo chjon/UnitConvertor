@@ -6,6 +6,17 @@ L1_DELIMITER = ';'
 L2_DELIMITER = ','
 L3_DELIMITER = ' '
 
+def stripPrefix(units, prefixedSym):
+	# Find longest matching suffix
+	longestSuffix = ""
+	for sym in units.keys():
+		if prefixedSym.endswith(sym) and len(sym) > len(longestSuffix):
+			longestSuffix = sym
+			if len(longestSuffix) == len(prefixedSym): break
+	
+	if len(longestSuffix) == 0: raise UnitError(f"Invalid unit: received '{prefixedSym}'")
+	return prefixedSym[0:len(prefixedSym)-len(longestSuffix)], longestSuffix
+
 def loadConversions(filename):
 	units = {}
 	conversions = {}
@@ -43,7 +54,11 @@ def loadConversions(filename):
 				baseUnit, exponent = baseUnitComponents
 				if not baseUnit.isalpha():
 					raise FileFormatError(f"Improper format: units must be alphabetical, received '{baseUnit}'")
+				try: stripPrefix(units, baseUnit)
+				except: raise FileFormatError(f"Improper format: '{sym}' requires definition of '{baseUnit}'")
 				baseUnits[baseUnit] = int(exponent)
+			if sym in units:
+				raise FileFormatError(f"Multiple definition of unit '{sym}'")
 			units[sym] = Unit(sym, baseUnits)
 			conversions[sym] = val
 		else:
@@ -79,7 +94,7 @@ def writeConversions(filename, units, conversions, prefixes):
 class Convertor:
 	# Topological sort implemented using DFS
 	def topologicalSortVisit(self, derivedUnit: str, toSort: list, sortedValues: list, visited: set):
-		prefix, derivedUnit = self.stripPrefix(derivedUnit)
+		prefix, derivedUnit = stripPrefix(self.units, derivedUnit)
 		if derivedUnit in visited: return
 		visited[derivedUnit] = True
 
@@ -96,22 +111,11 @@ class Convertor:
 		for derivedUnit in toSort:
 			self.topologicalSortVisit(derivedUnit, toSort, sortedValues, visited)
 		return sortedValues
-		
+
 	def __init__(self, units = {}, conversions = {}, prefixes = {}):
 		self.units = units
 		self.conversions = conversions
 		self.prefixes = prefixes
-	
-	def stripPrefix(self, prefixedSym):
-		# Find longest matching suffix
-		longestSuffix = ""
-		for sym in self.units.keys():
-			if prefixedSym.endswith(sym) and len(sym) > len(longestSuffix):
-				longestSuffix = sym
-				if len(longestSuffix) == len(prefixedSym): break
-		
-		if len(longestSuffix) == 0: raise UnitError(f"Invalid unit: received '{prefixedSym}'")
-		return prefixedSym[0:len(prefixedSym)-len(longestSuffix)], longestSuffix
 
 	def getPrefixScaleFactor(self, prefix):
 		for base, candidatePrefixMapping in self.prefixes.items():
@@ -123,7 +127,7 @@ class Convertor:
 		unitsToUpdate = {}
 		for prefixedSym, exp in units.items():
 			# Find prefix and base unit
-			prefix, baseUnit = self.stripPrefix(prefixedSym)
+			prefix, baseUnit = stripPrefix(self.units, prefixedSym)
 			if len(prefix) == 0: continue
 			unitsToUpdate[prefixedSym] = baseUnit
 
