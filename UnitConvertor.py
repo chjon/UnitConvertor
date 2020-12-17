@@ -24,6 +24,45 @@ def removeComment(s):
 	s = s[0:s.index(COMMENT_DELIMITER)]
 	return s
 
+def loadBaseUnit(units, components):
+	# Create base unit
+	sym = components[0]
+	if not sym.isalpha():
+		raise FileFormatError(f"Improper format: units must be alphabetical, received '{sym}'")
+	units[sym] = Unit(sym)
+
+def loadPrefix(prefixes, components):
+	# Create prefix mapping
+	base = int(components[0])
+	prefixMapping = {}
+	baseExpPairs = components[1].split(L2_DELIMITER)
+	for baseExpPair in baseExpPairs:
+		prefix, exp = baseExpPair.split(L3_DELIMITER)
+		prefixMapping[prefix] = int(exp)
+	prefixes[base] = prefixMapping
+
+def loadDerivedUnit(units, conversions, components):
+	# Create derived unit
+	sym = components[0]
+	if not sym.isalpha():
+		raise FileFormatError(f"Improper format: units must be alphabetical, received '{sym}'")
+	val = float(components[1])
+	baseUnits = {}
+	for baseUnitStr in components[2].split(L2_DELIMITER):
+		baseUnitComponents = baseUnitStr.split(L3_DELIMITER)
+		if len(baseUnitComponents) != 2:
+			raise FileFormatError(f"Improper format: expected 2 components, received '{baseUnitStr}'")
+		baseUnit, exponent = baseUnitComponents
+		if not baseUnit.isalpha():
+			raise FileFormatError(f"Improper format: units must be alphabetical, received '{baseUnit}'")
+		try: stripPrefix(units, baseUnit)
+		except: raise FileFormatError(f"Improper format: '{sym}' requires definition of '{baseUnit}'")
+		baseUnits[baseUnit] = int(exponent)
+	if sym in units:
+		raise FileFormatError(f"Multiple definition of unit '{sym}'")
+	units[sym] = Unit(sym, baseUnits)
+	conversions[sym] = val
+
 def loadConversions(filename):
 	units = {}
 	conversions = {}
@@ -31,49 +70,16 @@ def loadConversions(filename):
 	file = open(filename, 'r')
 	lines = [ line[0:-1] for line in file.readlines() ]
 	for line in lines:
+		# Strip comments
 		line = removeComment(line)
 		if len(line) == 0: continue
 
+		# Parse line
 		components = line.split(L1_DELIMITER)
-		if len(components) == 1:
-			# Create base unit
-			sym = components[0]
-			if not sym.isalpha():
-				raise FileFormatError(f"Improper format: units must be alphabetical, received '{sym}'")
-			units[sym] = Unit(sym)
-		elif len(components) == 2:
-			# Create prefix mapping
-			base = int(components[0])
-			prefixMapping = {}
-			baseExpPairs = components[1].split(L2_DELIMITER)
-			for baseExpPair in baseExpPairs:
-				prefix, exp = baseExpPair.split(L3_DELIMITER)
-				prefixMapping[prefix] = int(exp)
-			prefixes[base] = prefixMapping
-		elif len(components) == 3:
-			# Create derived unit
-			sym = components[0]
-			if not sym.isalpha():
-				raise FileFormatError(f"Improper format: units must be alphabetical, received '{sym}'")
-			val = float(components[1])
-			baseUnits = {}
-			for baseUnitStr in components[2].split(L2_DELIMITER):
-				baseUnitComponents = baseUnitStr.split(L3_DELIMITER)
-				if len(baseUnitComponents) != 2:
-					raise FileFormatError(f"Improper format: expected 2 components, received '{baseUnitStr}'")
-				baseUnit, exponent = baseUnitComponents
-				if not baseUnit.isalpha():
-					raise FileFormatError(f"Improper format: units must be alphabetical, received '{baseUnit}'")
-				try: stripPrefix(units, baseUnit)
-				except: raise FileFormatError(f"Improper format: '{sym}' requires definition of '{baseUnit}'")
-				baseUnits[baseUnit] = int(exponent)
-			if sym in units:
-				raise FileFormatError(f"Multiple definition of unit '{sym}'")
-			units[sym] = Unit(sym, baseUnits)
-			conversions[sym] = val
-		else:
-			print(components)
-			raise FileFormatError(f"Improper format: expected 3 components, received {len(components)}")
+		if len(components) == 1: loadBaseUnit(units, components)
+		elif len(components) == 2: loadPrefix(prefixes, components)
+		elif len(components) == 3: loadDerivedUnit(units, conversions, components)
+		else: raise FileFormatError(f"Improper format: expected 3 components, received {len(components)}")
 
 	file.close()
 	return units, conversions, prefixes
