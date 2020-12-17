@@ -7,6 +7,11 @@ L2_DELIMITER = ','
 L3_DELIMITER = ' '
 COMMENT_DELIMITER = '#'
 
+def isValidSymbol(sym):
+	for char in sym:
+		if (not char.isalpha()) and (char != '_'): return False
+	return True
+
 def stripPrefix(units, prefixedSym):
 	# Find longest matching suffix
 	longestSuffix = ""
@@ -27,7 +32,7 @@ def removeComment(s):
 def loadBaseUnit(units, components):
 	# Create base unit
 	sym = components[0].strip()
-	if not sym.isalpha():
+	if not isValidSymbol(sym):
 		raise FileFormatError(f"Improper format: units must be alphabetical, received '{sym}'")
 	units[sym] = Unit(sym)
 
@@ -46,7 +51,7 @@ def loadPrefix(prefixes, components):
 def loadDerivedUnit(units, conversions, components):
 	# Create derived unit
 	sym = components[0].strip()
-	if not sym.isalpha():
+	if not isValidSymbol(sym):
 		raise FileFormatError(f"Improper format: units must be alphabetical, received '{sym}'")
 	val = float(components[1])
 	baseUnits = {}
@@ -56,7 +61,7 @@ def loadDerivedUnit(units, conversions, components):
 			raise FileFormatError(f"Improper format: expected 2 components, received '{baseUnitStr}'")
 		baseUnit = baseUnitComponents[0].strip()
 		exponent = baseUnitComponents[1].strip()
-		if not baseUnit.isalpha():
+		if not isValidSymbol(baseUnit):
 			raise FileFormatError(f"Improper format: units must be alphabetical, received '{baseUnit}'")
 		try: stripPrefix(units, baseUnit)
 		except: raise FileFormatError(f"Improper format: '{sym}' requires definition of '{baseUnit}'")
