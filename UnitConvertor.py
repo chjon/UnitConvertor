@@ -5,6 +5,7 @@ class FileFormatError(Exception): pass
 L1_DELIMITER = ';'
 L2_DELIMITER = ','
 L3_DELIMITER = ' '
+COMMENT_DELIMITER = '#'
 
 def stripPrefix(units, prefixedSym):
 	# Find longest matching suffix
@@ -17,6 +18,12 @@ def stripPrefix(units, prefixedSym):
 	if len(longestSuffix) == 0: raise UnitError(f"Invalid unit: received '{prefixedSym}'")
 	return prefixedSym[0:len(prefixedSym)-len(longestSuffix)], longestSuffix
 
+def removeComment(s):
+	if COMMENT_DELIMITER not in s: return s
+	s = s.strip()
+	s = s[0:s.index(COMMENT_DELIMITER)]
+	return s
+
 def loadConversions(filename):
 	units = {}
 	conversions = {}
@@ -24,6 +31,9 @@ def loadConversions(filename):
 	file = open(filename, 'r')
 	lines = [ line[0:-1] for line in file.readlines() ]
 	for line in lines:
+		line = removeComment(line)
+		if len(line) == 0: continue
+
 		components = line.split(L1_DELIMITER)
 		if len(components) == 1:
 			# Create base unit
