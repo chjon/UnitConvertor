@@ -1,17 +1,5 @@
 from Unit import *
 
-class FileFormatError(Exception): pass
-
-L1_DELIMITER = ';'
-L2_DELIMITER = ','
-L3_DELIMITER = ' '
-COMMENT_DELIMITER = '#'
-
-def isValidSymbol(sym):
-	for char in sym:
-		if (not char.isalpha()) and (char != '_'): return False
-	return True
-
 def stripPrefix(units, prefixedSym):
 	# Find longest matching suffix
 	longestSuffix = ""
@@ -22,98 +10,6 @@ def stripPrefix(units, prefixedSym):
 	
 	if len(longestSuffix) == 0: raise UnitError(f"Invalid unit: received '{prefixedSym}'")
 	return prefixedSym[0:len(prefixedSym)-len(longestSuffix)], longestSuffix
-
-def removeComment(s):
-	if COMMENT_DELIMITER not in s: return s
-	s = s.strip()
-	s = s[0:s.index(COMMENT_DELIMITER)]
-	return s
-
-def loadBaseUnit(units, components):
-	# Create base unit
-	sym = components[0].strip()
-	if not isValidSymbol(sym):
-		raise FileFormatError(f"Improper format: units must be alphabetical, received '{sym}'")
-	units[sym] = Unit(sym)
-
-def loadPrefix(prefixes, components):
-	# Create prefix mapping
-	base = int(components[0].strip())
-	prefixMapping = {}
-	baseExpPairs = components[1].split(L2_DELIMITER)
-	for baseExpPair in baseExpPairs:
-		prefix, exp = baseExpPair.strip().split(L3_DELIMITER, 1)
-		prefix = prefix.strip()
-		exp = exp.strip()
-		prefixMapping[prefix] = int(exp)
-	prefixes[base] = prefixMapping
-
-def loadDerivedUnit(units, conversions, components):
-	# Create derived unit
-	sym = components[0].strip()
-	if not isValidSymbol(sym):
-		raise FileFormatError(f"Improper format: units must be alphabetical, received '{sym}'")
-	val = float(components[1])
-	baseUnits = {}
-	for baseUnitStr in components[2].split(L2_DELIMITER):
-		baseUnitComponents = baseUnitStr.strip().split(L3_DELIMITER, 1)
-		if len(baseUnitComponents) != 2:
-			raise FileFormatError(f"Improper format: expected 2 components, received '{baseUnitStr}'")
-		baseUnit = baseUnitComponents[0].strip()
-		exponent = baseUnitComponents[1].strip()
-		if not isValidSymbol(baseUnit):
-			raise FileFormatError(f"Improper format: units must be alphabetical, received '{baseUnit}'")
-		try: stripPrefix(units, baseUnit)
-		except: raise FileFormatError(f"Improper format: '{sym}' requires definition of '{baseUnit}'")
-		baseUnits[baseUnit] = int(exponent)
-	if sym in units:
-		raise FileFormatError(f"Multiple definition of unit '{sym}'")
-	units[sym] = Unit(sym, baseUnits)
-	conversions[sym] = val
-
-def loadConversions(filename):
-	units = {}
-	conversions = {}
-	prefixes = {}
-	file = open(filename, 'r')
-	lines = [ line[0:-1] for line in file.readlines() ]
-	for line in lines:
-		# Strip comments
-		line = removeComment(line)
-		if len(line) == 0: continue
-
-		# Parse line
-		components = line.split(L1_DELIMITER)
-		if len(components) == 1: loadBaseUnit(units, components)
-		elif len(components) == 2: loadPrefix(prefixes, components)
-		elif len(components) == 3: loadDerivedUnit(units, conversions, components)
-		else: raise FileFormatError(f"Improper format: expected 3 components, received {len(components)}")
-
-	file.close()
-	return units, conversions, prefixes
-
-def writeConversions(filename, units, conversions, prefixes):
-	file = open(filename, 'w')
-
-	# Write exponents
-	for base, prefixMapping in prefixes.items():
-		prefixStr = ''
-		for prefix, exp in prefixMapping.items():
-			prefixStr += f"{prefix}{L3_DELIMITER}{exp}{L2_DELIMITER}"
-		file.write(f"{base}{L1_DELIMITER}{prefixStr[0:-1]}\n")		
-
-	for sym, unit in units.items():
-		if len(unit.baseUnits) == 0:
-			# Write base units
-			file.write(f"{sym}\n")
-		else:
-			# Write derived units
-			baseUnitStr = ''
-			for baseUnitSym, exponent in unit.baseUnits.items():
-				baseUnitStr += f"{baseUnitSym}{L3_DELIMITER}{exponent}{L2_DELIMITER}"
-			file.write(f"{unit.sym}{L1_DELIMITER}{conversions[unit.sym]}{L1_DELIMITER}{baseUnitStr[0:-1]}\n")
-
-	file.close()
 
 class Convertor:
 	# Topological sort implemented using DFS
