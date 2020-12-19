@@ -1,6 +1,29 @@
 from Unit import UnitError
 
-def parseUnit(toParse):
+# Recursive descent parsing
+def parseFile(filename):
+	# Preprocess file to generate a list of tokens
+	file = open(filename, 'r')
+	tokens = tokenize(file.readline())
+	file.close()
+
+	# Parse tokens to generate output
+	units = {}
+	conversions = {}
+	prefixes = {}
+	while len(tokens):
+		if isValidSymbol(tokens[0]):
+			parseUnit(units, conversions, tokens)
+		else
+			parsePrefix(prefixes, tokens)
+	
+	# Check that all dependencies exist and check for an acyclic dependency graph
+	validate(units, conversions, prefixes)
+
+	# Return result of parsing
+	return units, conversions, prefixes
+
+def parseUnitStr(toParse):
 	unitMap = {}
 	toParse = toParse.strip()
 	components = toParse.split(' ')

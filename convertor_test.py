@@ -10,8 +10,8 @@ def test_conversion(verbose = False):
 	# Test topological sort
 	convertor = Convertor(units, conversions, prefixes)
 	print(convertor.convert(
-		Unit(baseUnits=UnitParser.parseUnit("uJ^-2")),
-		Unit(baseUnits=UnitParser.parseUnit("eV^-1 kW^-1 hr^-1"))
+		Unit(baseUnits=UnitParser.parseUnitStr("uJ^-2")),
+		Unit(baseUnits=UnitParser.parseUnitStr("eV^-1 kW^-1 hr^-1"))
 	))
 
 	return test_result
