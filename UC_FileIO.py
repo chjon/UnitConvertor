@@ -1,4 +1,5 @@
 import UC_FileParser
+import UC_Utils
 
 def tokenize(lines: list = []):
 	"""
@@ -47,7 +48,9 @@ def loadFile(filename):
 	units, conversions, prefixes = UC_FileParser.parseFile(tokens)
 
 	# Check that all dependencies exist and check for an acyclic dependency graph
-	validate(units, conversions, prefixes)
+	UC_Utils.validate(units, conversions, prefixes)
+
+	return units, conversions, prefixes
 
 def writeFile(filename, units, conversions, prefixes):
 	file = open(filename, 'w')

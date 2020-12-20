@@ -132,15 +132,16 @@ def parseUnit(units, conversions, tokens):
 	# Create unit
 	units[sym] = Unit(sym, baseUnitMap)
 
-def parsePrefixMapping(prefixes, tokens):
+def parsePrefixMapping(prefixes, tokens, base):
 	"""
 	Convert the next series of tokens into a prefix-exponent pair
 	@param prefixes: the prefix-exponent map to modify
 	@param tokens: a list of tokens
+	@param base: the base for the exponent
 	"""
 	prefix = getNextToken(tokens)
 	if prefix in prefixes: raise FileFormatError(f"Duplicate definition of prefix '{prefix}'")
-	prefixes[prefix] = parseInt(tokens)
+	prefixes[prefix] = (base, parseInt(tokens))
 
 def parsePrefix(prefixes, tokens):
 	"""
@@ -149,13 +150,12 @@ def parsePrefix(prefixes, tokens):
 	@param tokens: a list of tokens
 	"""
 	base = parseFloat(tokens)
-	if base not in prefixes: prefixes[base] = {}
-
 	getNextToken(tokens, MAP_DELIMITER)
-	parsePrefixMapping(prefixes[base], tokens)
+
+	parsePrefixMapping(prefixes, tokens, base)
 	while peekNextToken(tokens) == SEP_DELIMITER:
 		getNextToken(tokens)
-		parsePrefixMapping(prefixes[base], tokens)	
+		parsePrefixMapping(prefixes, tokens, base)	
 	getNextToken(tokens, END_DELIMITER)
 
 # Recursive descent parsing
@@ -178,20 +178,3 @@ def parseFile(tokens):
 
 	# Return result of parsing
 	return units, conversions, prefixes
-
-def parseUnitStr(toParse):
-	unitMap = {}
-	toParse = toParse.strip()
-	components = toParse.split(' ')
-	for component in components:
-		vals = component.split('^')
-		sym = vals[0]
-		if not (sym in unitMap): unitMap[sym] = 0
-		if len(vals) == 1:
-			unitMap[sym] += 1
-		elif len(vals) == 2:
-			unitMap[sym] += int(vals[1])
-		else:
-			raise UnitError(f"Invalid unit: '{component}'")
-	
-	return unitMap

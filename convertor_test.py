@@ -1,6 +1,7 @@
 from UC_Unit import *
 from UC_Convertor import *
 from UC_FileIO import *
+from UC_StrParser import *
 
 def test_conversion(verbose = False):
 	test_result = 0
@@ -11,7 +12,7 @@ def test_conversion(verbose = False):
 	convertor = Convertor(units, conversions, prefixes)
 	print(convertor.convert(
 		Unit(baseUnits=parseUnitStr("uJ^-2")),
-		Unit(baseUnits=parseUnitStr("eV^-1 kW^-1 hr^-1"))
+		Unit(baseUnits=parseUnitStr("eV^-1 kW^-1 h^-1"))
 	))
 
 	return test_result

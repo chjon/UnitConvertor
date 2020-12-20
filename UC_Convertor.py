@@ -1,5 +1,5 @@
 from UC_Unit import *
-from UC_Utils import *
+import UC_Utils
 
 class Convertor:
 	def __init__(self, units = {}, conversions = {}, prefixes = {}):
@@ -8,16 +8,15 @@ class Convertor:
 		self.prefixes = prefixes
 
 	def getPrefixScaleFactor(self, prefix):
-		for base, candidatePrefixMapping in self.prefixes.items():
-			for candidatePrefix, exp in candidatePrefixMapping.items():
-				if prefix == candidatePrefix: return (base)**(exp)
+		base, exp = self.prefixes[prefix]
+		return (base)**(exp)
 
 	def processPrefixes(self, units):
 		scaleFactor = 1
 		unitsToUpdate = {}
 		for prefixedSym, exp in units.items():
 			# Find prefix and base unit
-			prefix, baseUnit = stripPrefix(self.units, prefixedSym)
+			prefix, baseUnit = UC_Utils.stripPrefix(self.units, prefixedSym)
 			if len(prefix) == 0: continue
 			unitsToUpdate[prefixedSym] = baseUnit
 
@@ -82,7 +81,7 @@ class Convertor:
 
 			# Factor out common units and perform a topological sort to find the next unit to reduce
 			self.factorUnits(srcUnits, dstUnits)
-			unitsToReduce = self.topologicalSort([*srcUnits.keys()] + [*dstUnits.keys()])
+			unitsToReduce = UC_Utils.topologicalSort(self.units, [*srcUnits.keys()] + [*dstUnits.keys()])
 
 			# Reduce units
 			if len(unitsToReduce) == 0: break
