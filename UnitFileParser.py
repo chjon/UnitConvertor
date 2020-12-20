@@ -7,22 +7,38 @@ SEP_DELIMITER = ','
 MAP_DELIMITER = ':'
 COMMENT_DELIMITER = '#'
 
-# Determine whether a string is a valid unit symbol
 def isValidSymbol(sym):
+	"""
+	Determine whether a character is a valid unit symbol
+	@param sym: the string to check
+	@return True if the character is a valid unit symbol, False otherwise
+	"""
 	for char in sym:
 		if (not char.isalpha()) and (char != '_'): return False
 	return True
 
-# Determine whether a character is whitespace
 def isWhitespace(char):
+	"""
+	Determine whether a character is whitespace
+	@param char: the character to check
+	@return True if the character is whitespace, False otherwise
+	"""
 	return char == ' ' or char == '\t' or char == '\r' or char == '\n'
 
-# Determine whether a character is a delimiter
 def isDelimiter(char):
+	"""
+	Determine whether a character is a delimiter
+	@param char: the character to check
+	@return True if the character is a delimiter, False otherwise
+	"""
 	return char == END_DELIMITER or char == SEP_DELIMITER or char == MAP_DELIMITER
 
-# Generate tokens from lines
-def tokenize(lines):
+def tokenize(lines: list = []):
+	"""
+	Generate a list of tokens from a list of strings
+	@param lines: the list of strings from which to generate tokens
+	@return a list of tokens
+	"""
 	tokens = []
 	for line in lines:
 		token = ''
@@ -31,7 +47,6 @@ def tokenize(lines):
 			if char == COMMENT_DELIMITER:
 				if token: tokens.append(token)
 				break
-
 			# Handle whitespace
 			if isWhitespace(char):
 				if token:
@@ -48,36 +63,69 @@ def tokenize(lines):
 
 	return tokens
 
-def peekNextToken(tokens):
+def peekNextToken(tokens: list = []):
+	"""
+	Get the next token without removing it from the queue
+	@param tokens: a list of tokens
+	@return the next token
+	"""
+
 	if not tokens: raise FileFormatError(f"Expected token; none received")
 	return tokens[0]
 
-def getNextToken(tokens, expectedToken = None):
+def getNextToken(tokens: list = [], expectedToken = None):
+	"""
+	Get the next token and remove it from the queue
+	@param tokens: a list of tokens
+	@param expectedToken: the expected token - an error is thrown if the next token
+	does not equal the expected token
+	@return the next token
+	"""
+
 	if not tokens: raise FileFormatError(f"Expected token; none received")
 	token = tokens.pop(0)
 	if expectedToken and token != expectedToken: raise FileFormatError(f"Expected '{expectedToken}'; received '{token}'")
 	return token
 
 def parseFloat(tokens):
+	"""
+	Get the next token as a float and remove it from the queue
+	@param tokens: a list of tokens
+	@return the next token as a float
+	"""
 	scaleFactorStr = getNextToken(tokens)
 	try: scaleFactor = float(scaleFactorStr)
 	except: raise FileFormatError(f"Expected float; received '{scaleFactorStr}'")
 	return scaleFactor
 
 def parseInt(tokens):
-	scaleFactor = getNextToken(tokens)
-	try: scaleFactor = int(scaleFactor)
-	except: raise FileFormatError(f"Expected integer; received '{scaleFactor}'")
+	"""
+	Get the next token as an int and remove it from the queue
+	@param tokens: a list of tokens
+	@return the next token as an int
+	"""
+	scaleFactorStr = getNextToken(tokens)
+	try: scaleFactor = int(scaleFactorStr)
+	except: raise FileFormatError(f"Expected integer; received '{scaleFactorStr}'")
 	return scaleFactor
 
 def parseSymbol(tokens):
+	"""
+	Get the next token as a unit symbol and remove it from the queue
+	@param tokens: a list of tokens
+	@return the next token as a unit symbol
+	"""
 	sym = getNextToken(tokens)
 	if not isValidSymbol(sym):
 		raise FileFormatError(f"Expected alphabetical symbol; received '{sym}'")
 	return sym
 
 def parseBaseUnitMap(tokens):
-	scaleFactor = parseFloat(tokens)
+	"""
+	Convert the next series of tokens into a map of units to exponents
+	@param tokens: a list of tokens
+	@return pairs of units and their corresponding exponents
+	"""
 	baseUnitMap = {}
 
 	while peekNextToken(tokens) == SEP_DELIMITER:
@@ -87,9 +135,15 @@ def parseBaseUnitMap(tokens):
 		baseUnitMap[baseSym] += parseInt(tokens)
 
 	getNextToken(tokens, END_DELIMITER)
-	return scaleFactor, baseUnitMap
+	return baseUnitMap
 
 def parseUnit(units, conversions, tokens):
+	"""
+	Convert the next series of tokens into a unit
+	@param units: a map of unit symbols to unit objects to be modified
+	@param conversions: a map of unit symbols to scale factors to be modified
+	@param tokens: a list of tokens
+	"""
 	baseUnitMap = {}
 
 	# Handle base unit
@@ -99,7 +153,8 @@ def parseUnit(units, conversions, tokens):
 	# Handle derived unit
 	nextToken = getNextToken(tokens)
 	if nextToken == MAP_DELIMITER:
-		scaleFactor, baseUnitMap = parseBaseUnitMap(tokens)
+		scaleFactor = parseFloat(tokens)
+		baseUnitMap = parseBaseUnitMap(tokens)
 		conversions[sym] = scaleFactor
 	
 	# Handle other tokens
@@ -109,11 +164,21 @@ def parseUnit(units, conversions, tokens):
 	units[sym] = Unit(sym, baseUnitMap)
 
 def parsePrefixMapping(prefixes, tokens):
+	"""
+	Convert the next series of tokens into a prefix-exponent pair
+	@param prefixes: the prefix-exponent map to modify
+	@param tokens: a list of tokens
+	"""
 	prefix = getNextToken(tokens)
 	if prefix in prefixes: raise FileFormatError(f"Duplicate definition of prefix '{prefix}'")
 	prefixes[prefix] = parseInt(tokens)
 
 def parsePrefix(prefixes, tokens):
+	"""
+	Convert the next series of tokens into prefix-exponent pairs
+	@param prefixes: the prefix-exponent map to modify
+	@param tokens: a list of tokens
+	"""
 	base = parseFloat(tokens)
 	if base not in prefixes: prefixes[base] = {}
 
@@ -125,12 +190,14 @@ def parsePrefix(prefixes, tokens):
 	getNextToken(tokens, END_DELIMITER)
 
 # Recursive descent parsing
-def loadFile(filename):
-	# Preprocess file to generate a list of tokens
-	file = open(filename, 'r')
-	tokens = tokenize(file.readlines())
-	file.close()
-
+def parseFile(tokens):
+	"""
+	Convert a list of tokens into maps of units, conversions, and prefixes
+	@param tokens: a list of tokens
+	@return units: a map of unit symbols to unit objects
+	@return conversions: a map of derived unit symbols to scale factors
+	@return prefixes: a map of prefixes to exponents
+	"""
 	# Parse tokens to generate output
 	units = {}
 	conversions = {}
@@ -146,6 +213,21 @@ def loadFile(filename):
 
 	# Return result of parsing
 	return units, conversions, prefixes
+
+def loadFile(filename):
+	"""
+	Read a file and generate maps of units, conversions, and prefixes
+	@param filename: the name of the file to load
+	@return units: a map of unit symbols to unit objects
+	@return conversions: a map of derived unit symbols to scale factors
+	@return prefixes: a map of prefixes to exponents
+	"""
+	# Generate a list of tokens from the file
+	file = open(filename, 'r')
+	tokens = tokenize(file.readlines())
+	file.close()
+
+	return parseFile(tokens)
 
 def writeFile(filename, units, conversions, prefixes):
 	file = open(filename, 'w')
