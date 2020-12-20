@@ -1,6 +1,6 @@
-from Unit import *
-from UnitConvertor import *
-from UnitFileParser import *
+from UC_Unit import *
+from UC_Convertor import *
+from UC_FileIO import *
 
 def test_conversion(verbose = False):
 	test_result = 0

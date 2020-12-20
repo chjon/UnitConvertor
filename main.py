@@ -1,7 +1,7 @@
-from Unit import *
+from UC_Unit import *
 
 def main():
-	q1 = Quantity(1, Unit({"cm": 1}))
+	q1 = Quantity(1, Unit("cm"))
 
 	print(str(q1))
 

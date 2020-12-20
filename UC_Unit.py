@@ -1,5 +1,3 @@
-class UnitError(Exception): pass
-
 class Unit:
 	def isBaseUnit(self):
 		return self.sym != None and len(self.baseUnits) == 0

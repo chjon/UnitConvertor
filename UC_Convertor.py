@@ -1,37 +1,7 @@
-from Unit import *
-
-def stripPrefix(units, prefixedSym):
-	# Find longest matching suffix
-	longestSuffix = ""
-	for sym in units.keys():
-		if prefixedSym.endswith(sym) and len(sym) > len(longestSuffix):
-			longestSuffix = sym
-			if len(longestSuffix) == len(prefixedSym): break
-	
-	if len(longestSuffix) == 0: raise UnitError(f"Invalid unit: received '{prefixedSym}'")
-	return prefixedSym[0:len(prefixedSym)-len(longestSuffix)], longestSuffix
+from UC_Unit import *
+from UC_Utils import *
 
 class Convertor:
-	# Topological sort implemented using DFS
-	def topologicalSortVisit(self, derivedUnit: str, toSort: list, sortedValues: list, visited: set):
-		prefix, derivedUnit = stripPrefix(self.units, derivedUnit)
-		if derivedUnit in visited: return
-		visited[derivedUnit] = True
-
-		if derivedUnit in self.conversions.keys():
-			for baseUnit in self.units[derivedUnit].baseUnits.keys():
-				self.topologicalSortVisit(baseUnit, toSort, sortedValues, visited)
-
-		if derivedUnit in toSort: sortedValues.insert(0, derivedUnit)
-
-	# Perform a topological sort over the conversions
-	def topologicalSort(self, toSort: list):
-		sortedValues = []
-		visited = {}
-		for derivedUnit in toSort:
-			self.topologicalSortVisit(derivedUnit, toSort, sortedValues, visited)
-		return sortedValues
-
 	def __init__(self, units = {}, conversions = {}, prefixes = {}):
 		self.units = units
 		self.conversions = conversions
