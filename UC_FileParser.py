@@ -92,6 +92,10 @@ def parseBaseUnitMap(tokens):
 	"""
 	baseUnitMap = {}
 
+	baseSym = parseSymbol(tokens)
+	if baseSym not in baseUnitMap: baseUnitMap[baseSym] = 0
+	baseUnitMap[baseSym] += parseInt(tokens)
+
 	while peekNextToken(tokens) == SEP_DELIMITER:
 		getNextToken(tokens)
 		baseSym = parseSymbol(tokens)
@@ -118,6 +122,7 @@ def parseUnit(units, conversions, tokens):
 	nextToken = getNextToken(tokens)
 	if nextToken == MAP_DELIMITER:
 		scaleFactor = parseFloat(tokens)
+		getNextToken(tokens, SEP_DELIMITER)
 		baseUnitMap = parseBaseUnitMap(tokens)
 		conversions[sym] = scaleFactor
 	

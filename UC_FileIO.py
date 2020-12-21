@@ -29,6 +29,8 @@ def tokenize(lines: list = []):
 				tokens.append(char)
 			# Build token
 			else: token += char
+		
+		if token: tokens.append(token)
 
 	return tokens
 
