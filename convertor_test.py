@@ -1,17 +1,18 @@
-from Unit import *
-from UnitConvertor import *
-import UnitParser
+from UC_Unit import *
+from UC_Convertor import *
+from UC_FileIO import *
+from UC_StrParser import *
 
 def test_conversion(verbose = False):
 	test_result = 0
-	units, conversions, prefixes = loadConversions("standard.csv")
+	units, conversions, prefixes = loadFile("standard.csv")
 	# writeConversions("test.csv", units, conversions, prefixes)
 
 	# Test topological sort
 	convertor = Convertor(units, conversions, prefixes)
 	print(convertor.convert(
-		Unit(baseUnits=UnitParser.parseUnit("uJ^-2")),
-		Unit(baseUnits=UnitParser.parseUnit("eV^-1 kW^-1 hr^-1"))
+		Unit(baseUnits=parseUnitStr("uJ^-2")),
+		Unit(baseUnits=parseUnitStr("eV^-1 kW^-1 h^-1"))
 	))
 
 	return test_result

@@ -1,6 +1,6 @@
-from Unit import UnitError
+from UC_Errors import *
 
-def parseUnit(toParse):
+def parseUnitStr(toParse):
 	unitMap = {}
 	toParse = toParse.strip()
 	components = toParse.split(' ')
