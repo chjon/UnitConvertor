@@ -1,4 +1,4 @@
-from UC_Errors import *
+from UC_Common import *
 
 def stripPrefix(units, string):
 	# Find longest matching suffix
