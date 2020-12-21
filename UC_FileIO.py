@@ -1,4 +1,5 @@
 import UC_FileParser
+import UC_FileSerializer
 import UC_Utils
 
 def tokenize(lines: list = []):
@@ -53,24 +54,13 @@ def loadFile(filename):
 	return units, conversions, prefixes
 
 def writeFile(filename, units, conversions, prefixes):
+	# Get lines to write
+	lines = []
+	lines.extend(UC_FileSerializer.serializePrefixes(prefixes))
+	lines.extend(UC_FileSerializer.serializeUnitConversions(units, conversions))
+
+	# Write lines
 	file = open(filename, 'w')
-
-	# Write exponents
-	for base, prefixMapping in prefixes.items():
-		prefixStr = ''
-		for prefix, exp in prefixMapping.items():
-			prefixStr += f"{prefix}{L3_DELIMITER}{exp}{L2_DELIMITER}"
-		file.write(f"{base}{L1_DELIMITER}{prefixStr[0:-1]}\n")		
-
-	for sym, unit in units.items():
-		if len(unit.baseUnits) == 0:
-			# Write base units
-			file.write(f"{sym}\n")
-		else:
-			# Write derived units
-			baseUnitStr = ''
-			for baseUnitSym, exponent in unit.baseUnits.items():
-				baseUnitStr += f"{baseUnitSym}{L3_DELIMITER}{exponent}{L2_DELIMITER}"
-			file.write(f"{unit.sym}{L1_DELIMITER}{conversions[unit.sym]}{L1_DELIMITER}{baseUnitStr[0:-1]}\n")
-
+	for line in lines:
+		file.write(f"{line}\r\n")	
 	file.close()
