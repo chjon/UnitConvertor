@@ -5,7 +5,7 @@ def serializePrefixes(prefixes):
 
 	# Aggregate prefixes by base
 	aggregatedPrefixes = {}
-	for prefix, base, exp in prefixes.items():
+	for prefix, (base, exp) in prefixes.items():
 		if base not in aggregatedPrefixes: aggregatedPrefixes[base] = {}
 		aggregatedPrefixes[base][prefix] = exp
 	
