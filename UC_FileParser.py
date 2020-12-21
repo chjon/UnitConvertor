@@ -1,10 +1,5 @@
 from UC_Unit import *
-from UC_Errors import *
-
-END_DELIMITER = ';'
-SEP_DELIMITER = ','
-MAP_DELIMITER = ':'
-COMMENT_DELIMITER = '#'
+from UC_Common import *
 
 def isValidSymbol(sym):
 	"""
