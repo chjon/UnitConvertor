@@ -12,24 +12,59 @@ def stripPrefix(units, string):
 	return string[0:len(string)-len(longestSuffix)], longestSuffix
 
 # Topological sort implemented using DFS
-def topologicalSortVisit(units: dict, derivedUnit: str, toSort: list, sortedValues: list, visited: set):
-	prefix, derivedUnit = stripPrefix(units, derivedUnit)
-	if derivedUnit in visited: return
-	visited[derivedUnit] = True
+def topologicalSortVisit(units: dict, unit: str, sortedValues: list, permVisited: set, tempVisited: set):
+	if unit in permVisited: return
+	if unit in tempVisited: raise UnitError(f"Dependency cycle detected for unit '{unit}'")
+	tempVisited[unit] = True
 
-	if derivedUnit in units:
-		for baseUnit in units[derivedUnit].baseUnits.keys():
-			topologicalSortVisit(units, baseUnit, toSort, sortedValues, visited)
+	for baseUnit in units[unit].baseUnits.keys():
+		prefix, sym = stripPrefix(units, baseUnit)
+		topologicalSortVisit(units, sym, sortedValues, permVisited, tempVisited)
 
-	if derivedUnit in toSort: sortedValues.insert(0, derivedUnit)
+	del tempVisited[unit]
+	permVisited[unit] = True
+
+	sortedValues.insert(0, unit)
 
 # Perform a topological sort over the conversions
-def topologicalSort(units: dict, toSort: list):
+def topologicalSort(units: dict, toSort: list = None):
 	sortedValues = []
-	visited = {}
-	for derivedUnit in toSort:
-		topologicalSortVisit(units, derivedUnit, toSort, sortedValues, visited)
-	return sortedValues
+	permVisited = {}
+	tempVisited = {}
 
-# TODO: Implement this!
-def validate(units, conversions, prefixes): pass
+	# Sort the entire graph
+	for unit in ([*units.keys()] if toSort == None else toSort):
+		prefix, sym = stripPrefix(units, unit)
+		if sym not in permVisited:
+			topologicalSortVisit(units, sym, sortedValues, permVisited, tempVisited)
+	if toSort == None: return sortedValues
+
+	# Generate a filter from the desired values
+	desiredValues = {}
+	for unit in toSort:
+		prefix, sym = stripPrefix(units, unit)
+		if sym not in desiredValues: desiredValues[sym] = []
+		desiredValues[sym].append(prefix)
+
+	# Filter the topological sort to the desired values
+	filteredValues = []
+	for unit in sortedValues:
+		if unit in desiredValues:
+			filteredValues.extend([f"{prefix}{unit}" for prefix in desiredValues[unit]])
+
+	return filteredValues
+
+def validate(units, conversions, prefixes):
+	# Ensure that all units and dependencies are defined
+	for unit in units.values():
+		for baseUnit in unit.baseUnits.keys():
+			prefix, sym = stripPrefix(units, baseUnit)
+			if sym not in units: raise UnitError(f"Invalid unit symbol: '{sym}'")
+			if prefix and (prefix not in prefixes): raise UnitError(f"Invalid prefix: '{prefix}'")
+	
+	# Ensure that all conversion units are defined
+	for unit in conversions.keys():
+		if unit not in units: raise UnitError(f"No unit defined for conversion from: '{unit}'")
+	
+	# Ensure that there are no cycles in the dependency graph
+	topologicalSort(units)
