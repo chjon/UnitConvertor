@@ -1,6 +1,11 @@
 from UC_Common import *
 
 def serializePrefixes(prefixes):
+	"""
+	Generate strings representing the prefix map
+	@param prefixes: the prefixes to convert to strings
+	@return a list of lines representing the prefix map
+	"""
 	lines = []
 
 	# Aggregate prefixes by base
@@ -19,6 +24,12 @@ def serializePrefixes(prefixes):
 	return lines
 
 def serializeUnitConversions(units, conversions):
+	"""
+	Generate strings representing the unit conversion maps
+	@param units: the units to convert to strings
+	@param conversions: the scale factors to convert to strings
+	@return a list of lines representing the unit conversion maps
+	"""
 	lines = []
 
 	for sym, unit in units.items():

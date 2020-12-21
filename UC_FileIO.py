@@ -54,6 +54,13 @@ def loadFile(filename):
 	return units, conversions, prefixes
 
 def writeFile(filename, units, conversions, prefixes):
+	"""
+	Write a file representined the unit conversion and prefix maps
+	@param filename: the name of the file to write
+	@param units: a map of unit symbols to unit objects
+	@param conversions: a map of derived unit symbols to scale factors
+	@param prefixes: a map of prefixes to exponents
+	"""
 	# Get lines to write
 	lines = []
 	lines.extend(UC_FileSerializer.serializePrefixes(prefixes))
