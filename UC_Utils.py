@@ -1,4 +1,34 @@
-from UC_Common import *
+import UC_Common
+
+def isValidSymbol(sym):
+	"""
+	Determine whether a character is a valid unit symbol
+	@param sym: the string to check
+	@return True if the character is a valid unit symbol, False otherwise
+	"""
+	for char in sym:
+		if (not char.isalpha()) and (char != '_'): return False
+	return True
+
+def isWhitespace(char):
+	"""
+	Determine whether a character is whitespace
+	@param char: the character to check
+	@return True if the character is whitespace, False otherwise
+	"""
+	return char == ' ' or char == '\t' or char == '\r' or char == '\n'
+
+def isDelimiter(char):
+	"""
+	Determine whether a character is a delimiter
+	@param char: the character to check
+	@return True if the character is a delimiter, False otherwise
+	"""
+	return (
+		char == UC_Common.END_DELIMITER or
+		char == UC_Common.SEP_DELIMITER or
+		char == UC_Common.MAP_DELIMITER
+	)
 
 def stripPrefix(units, string):
 	# Find longest matching suffix
