@@ -1,3 +1,4 @@
+import UC_Common
 import UC_FileParser
 import UC_FileSerializer
 import UC_Utils
@@ -13,16 +14,16 @@ def tokenize(lines: list = []):
 		token = ''
 		for char in line:
 			# Stop processing line if there is a comment
-			if char == UC_FileParser.COMMENT_DELIMITER:
+			if char == UC_Common.COMMENT_DELIMITER:
 				if token: tokens.append(token)
 				break
 			# Handle whitespace
-			if UC_FileParser.isWhitespace(char):
+			if UC_Utils.isWhitespace(char):
 				if token:
 					tokens.append(token)
 					token = ''
 			# Handle delimiters
-			elif UC_FileParser.isDelimiter(char):
+			elif UC_Utils.isDelimiter(char):
 				if token:
 					tokens.append(token)
 					token = ''
