@@ -49,6 +49,50 @@ def hasHigherPrecedence(operatorA, operatorB):
 	precedenceB, associativityB = operatorPrecedences[operatorB]
 	return (precedenceA > precedenceB) or (precedenceA == precedenceB and associativityB == 1)
 
+def tokenizeFloat(token, tokens, char, parseFloatState):
+	# State machine for parsing floats as a single token
+	# Floats are a special case because '+' and '-' are valid components
+	if parseFloatState == 0:
+		if char.isnumeric():
+			parseFloatState = 1
+			if token: tokens.append(token)
+			token = ""
+		elif char == '.': parseFloatState = 2
+	elif parseFloatState == 1:
+		if char == '.': parseFloatState = 2
+		elif char == 'e': parseFloatState = 3
+		elif not char.isnumeric():
+			parseFloatState = 0
+			if token: tokens.append(token)
+			token = ""
+	elif parseFloatState == 2:
+		if char == 'e': parseFloatState = 3
+		elif not char.isnumeric():
+			parseFloatState = 0
+			if token: tokens.append(token)
+			token = ""
+	elif parseFloatState == 3:
+		if char == '+' or char == '-' or char.isnumeric(): parseFloatState = 4
+		else:
+			parseFloatState = 0
+			if token: tokens.append(token[:-1])
+			token = token[-1]
+	elif parseFloatState == 4:
+		if not char.isnumeric():
+			tmp = []
+			if token[-1] == '+' or token[-1] == '-':
+				tmp.append(token[-1])
+				token = token[:-1]
+			if token[-1] == 'e':
+				tmp.append(token[-1])
+				token = token[:-1]
+			if token: tokens.append(token)
+			token = ""
+			while tmp: tokens.append(tmp.pop())
+			parseFloatState = 0
+	
+	return token, parseFloatState
+
 def tokenize(line):
 	"""
 	Convert a string into a list of tokens
@@ -61,24 +105,8 @@ def tokenize(line):
 	# Identify tokens
 	parseFloatState = 0
 	for char in line:
-		# State machine for parsing floats as a single token
-		# Floats are a special case because '+' and '-' are valid components
-		if parseFloatState == 0 and char.isnumeric():
-			parseFloatState = 1
-			if token: tokens.append(token)
-			token = ""
-		elif parseFloatState == 1:
-			if char == '.': parseFloatState = 2
-			elif char == 'e': parseFloatState = 3
-			elif not char.isnumeric(): parseFloatState = 0
-		elif parseFloatState == 2:
-			if char == 'e': parseFloatState = 3
-			elif not char.isnumeric(): parseFloatState = 0
-		elif parseFloatState == 3:
-			if char == '+' or char == '-': parseFloatState = 4
-			elif not char.isnumeric(): parseFloatState = 0
-		elif parseFloatState == 4:
-			if not char.isnumeric(): parseFloatState = 0
+		# Handle float-like tokens
+		token, parseFloatState = tokenizeFloat(token, tokens, char, parseFloatState)
 
 		# Handle non-float tokens
 		if parseFloatState: token += char
@@ -91,6 +119,7 @@ def tokenize(line):
 			tokens.append(char)
 		else: token += char
 	
+	token, parseFloatState = tokenizeFloat(token, tokens, "", parseFloatState)
 	if token: tokens.append(token)
 	return tokens
 
