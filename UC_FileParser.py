@@ -2,63 +2,6 @@ from UC_Unit import *
 from UC_Utils import *
 from UC_Common import *
 
-def peekNextToken(tokens: list = []):
-	"""
-	Get the next token without removing it from the queue
-	@param tokens: a list of tokens
-	@return the next token
-	"""
-
-	if not tokens: raise FileFormatError(f"Expected token; none received")
-	return tokens[0]
-
-def getNextToken(tokens: list = [], expectedToken = None):
-	"""
-	Get the next token and remove it from the queue
-	@param tokens: a list of tokens
-	@param expectedToken: the expected token - an error is thrown if the next token
-	does not equal the expected token
-	@return the next token
-	"""
-
-	if not tokens: raise FileFormatError(f"Expected token; none received")
-	token = tokens.pop(0)
-	if expectedToken and token != expectedToken: raise FileFormatError(f"Expected '{expectedToken}'; received '{token}'")
-	return token
-
-def parseFloat(tokens):
-	"""
-	Get the next token as a float and remove it from the queue
-	@param tokens: a list of tokens
-	@return the next token as a float
-	"""
-	scaleFactorStr = getNextToken(tokens)
-	try: scaleFactor = float(scaleFactorStr)
-	except: raise FileFormatError(f"Expected float; received '{scaleFactorStr}'")
-	return scaleFactor
-
-def parseInt(tokens):
-	"""
-	Get the next token as an int and remove it from the queue
-	@param tokens: a list of tokens
-	@return the next token as an int
-	"""
-	scaleFactorStr = getNextToken(tokens)
-	try: scaleFactor = int(scaleFactorStr)
-	except: raise FileFormatError(f"Expected integer; received '{scaleFactorStr}'")
-	return scaleFactor
-
-def parseSymbol(tokens):
-	"""
-	Get the next token as a unit symbol and remove it from the queue
-	@param tokens: a list of tokens
-	@return the next token as a unit symbol
-	"""
-	sym = getNextToken(tokens)
-	if not isValidSymbol(sym):
-		raise FileFormatError(f"Expected alphabetical symbol; received '{sym}'")
-	return sym
-
 def parseBaseUnitMap(tokens):
 	"""
 	Convert the next series of tokens into a map of units to exponents
