@@ -40,14 +40,74 @@ def test_tokenization(verbose = False):
 
 	return test_result
 
+def aggregation_expect(tokens, expected, verbose):
+	if expected == None:
+		try:
+			tokens = UC_StrParser.aggregate(tokens)
+			return test_fail(f"Received {tokens}; expected error", verbose)
+		except: return 0
+	else:
+		tokens = UC_StrParser.aggregate(tokens)
+		if tokens != expected: return test_fail(f"Received {tokens}; expected {expected}", verbose)
+		return 0
+
+def test_aggregation(verbose = False):
+	test_result = 0
+
+	# Test aggregating adjacent units
+	test_result += aggregation_expect([], [], verbose)
+	test_result += aggregation_expect(["1"], [("1", [])], verbose)
+	test_result += aggregation_expect(["1", "cm"], [("1", ["cm"])], verbose)
+	test_result += aggregation_expect(["1", "cm", "m"], [("1", ["cm", "m"])], verbose)
+	test_result += aggregation_expect(["1", "cm", "*", "m"], [("1", ["cm", "*", "m"])], verbose)
+	test_result += aggregation_expect(["(", "1", "cm", ")"], ["(", ("1", ["cm"]), ")"], verbose)
+
+	# Test aggregating exponents
+	test_result += aggregation_expect(
+		["1", "cm", "^", "2"],
+		[("1", ["cm", "^", "2"])],
+	verbose)
+	test_result += aggregation_expect(
+		["1", "cm", "^", "(", "2", ")"],
+		[("1", ["cm", "^", "(", "2", ")"])],
+	verbose)
+	test_result += aggregation_expect(
+		["1", "cm", "^", "(", "-", "2", ")"],
+		[("1", ["cm", "^", "(", "-", "2", ")"])],
+	verbose)
+	test_result += aggregation_expect(
+		["1", "cm", "^", "(", "2", "+", "1", ")"],
+		[("1", ["cm", "^", "(", "2", "+", "1", ")"])],
+	verbose)
+	test_result += aggregation_expect(
+		["1", "cm", "^", "(", "cm", ")"],
+		None,
+	verbose)
+
+	# Test values/units with no immediately adjacent units/values
+	test_result += aggregation_expect(
+		["(", ")"],
+		["(", ")"],
+	verbose)
+	test_result += aggregation_expect(
+		["1", "(", "cm", ")"],
+		[("1", []), "(", ("1", ["cm"]), ")"],
+	verbose)
+	test_result += aggregation_expect(
+		["1", "*", "cm"],
+		[("1", []), "*", ("1", ["cm"])],
+	verbose)
+
+	return test_result
+
 def test_parser(verbose = False):
 	test_result = 0
 
-	tokens = UC_StrParser.tokenize("15 cm^2-1.7e-17 mm *8mm +1e+1.e + 1.3e +1.4e-e 3.4 m^(0+1)")
-	print(tokens)
-	tokens = UC_StrParser.aggregateUnits(tokens)
-	print(tokens)
-	tokens = UC_StrParser.convertToRPN(tokens)
+	# tokens = UC_StrParser.tokenize("15 cm^2-1.7e-17 mm *8mm +1e+1.e + 1.3e +1.4e-e 3.4 m^(0+1)")
+	# print(tokens)
+	# tokens = UC_StrParser.aggregate(tokens)
+	# print(tokens)
+	# tokens = UC_StrParser.convertToRPN(tokens)
 
 	return test_result
 
@@ -55,6 +115,7 @@ def main():
 	# Run tests
 	verbose = True
 	print(f"test_tokenization: {test_tokenization(verbose)} tests failed")
+	print(f"test_aggregation: {test_aggregation(verbose)} tests failed")
 	print(f"test_parser: {test_parser(verbose)} tests failed")
 
 if (__name__ == "__main__"):

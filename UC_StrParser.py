@@ -147,7 +147,7 @@ def convertToRPN(tokens):
 			while operatorStack and operatorStack[-1] != BRACKET_OPEN:
 				outputQueue.append(operatorStack.pop())
 			if operatorStack.pop() != BRACKET_OPEN:
-				raise UnitError(f"Detected mismatched parentheses: '{BRACKET_SHUT}'")
+				raise UC_Common.UnitError(f"Detected mismatched parentheses: '{BRACKET_SHUT}'")
 		elif isOperator(token):
 			while (
 				operatorStack and
@@ -160,32 +160,10 @@ def convertToRPN(tokens):
 	
 	while operatorStack:
 		if operatorStack[-1] == BRACKET_OPEN:
-			raise UnitError(f"Detected mismatched parentheses: '{BRACKET_OPEN}'")
+			raise UC_Common.UnitError(f"Detected mismatched parentheses: '{BRACKET_OPEN}'")
 		outputQueue.append(operatorStack.pop())
 
 	return outputQueue
-
-def peekNextToken(tokens: list = []):
-	"""
-	Get the next token without removing it from the queue
-	@param tokens: a list of tokens
-	@return the next token
-	"""
-	if not tokens: raise UnitError(f"Expected token; none received")
-	return tokens[0]
-
-def getNextToken(tokens: list = [], expectedToken = None):
-	"""
-	Get the next token and remove it from the queue
-	@param tokens: a list of tokens
-	@param expectedToken: the expected token - an error is thrown if the next token
-	does not equal the expected token
-	@return the next token
-	"""
-	if not tokens: raise UnitError(f"Expected token; none received")
-	token = tokens.pop(0)
-	if expectedToken and token != expectedToken: raise UnitError(f"Expected '{expectedToken}'; received '{token}'")
-	return token
 
 def aggregateUnits(tokens):
 	"""
@@ -193,29 +171,97 @@ def aggregateUnits(tokens):
 	@param tokens: a list of tokens
 	"""
 	aggregatedTokens = []
+	unitTokens = []
+	parsingExp = 0
 
 	while tokens:
-		if UC_Utils.isValidSymbol(tokens[0]):
-			aggregatedUnit = []
-			while tokens and UC_Utils.isValidSymbol(tokens[0]):
-				aggregatedUnit.append(getNextToken(tokens))
-				if len(tokens) > 1 and isOperator(tokens[0]):
-					if tokens[0] == OPERATOR_EXP:
-						try:
-							int(tokens[1])
-							aggregatedUnit.append(getNextToken(tokens))
-							aggregatedUnit.append(getNextToken(tokens))
-							continue
-						except: pass
-					elif tokens[0] == OPERATOR_MUL or tokens[0] == OPERATOR_DIV:
-						if UC_Utils.isValidSymbol(tokens[1]):
-							aggregatedUnit.append(getNextToken(tokens))
-							continue
-				break
-			aggregatedTokens.append(aggregatedUnit)
+		token = UC_Utils.getNextToken(tokens)
+		if token == BRACKET_OPEN:
+			if parsingExp:
+				parsingExp += 1
+				unitTokens.append(token)
+			else:
+				if unitTokens: aggregatedTokens.append(unitTokens)
+				unitTokens = []
+				aggregatedTokens.append(token)
+		elif token == BRACKET_SHUT:
+			if parsingExp:
+				parsingExp -= 1
+				unitTokens.append(token)
+				if parsingExp == 1: parsingExp = 0
+			else:
+				if unitTokens: aggregatedTokens.append(unitTokens)
+				unitTokens = []
+				aggregatedTokens.append(token)
+		elif UC_Utils.isFloat(token):
+			if parsingExp:
+				if not UC_Utils.isInt(token): raise UC_Common.UnitError(f"Expected int; received '{token}'")
+				if parsingExp == 1: parsingExp = 0
+				unitTokens.append(token)
+			else:
+				if unitTokens: aggregatedTokens.append(unitTokens)
+				unitTokens = []
+				aggregatedTokens.append(token)
+		elif UC_Utils.isValidSymbol(token):
+			if parsingExp: raise UC_Common.UnitError(f"Expected int; received '{token}'")
+			unitTokens.append(token)
+			if tokens:
+				operator = tokens[0]
+				if operator == OPERATOR_EXP:
+					unitTokens.append(tokens.pop(0))
+					parsingExp = True
+				elif isOperator(operator):
+					unitTokens.append(tokens.pop(0))
+		elif isOperator(token):
+			if parsingExp: unitTokens.append(token)
+			else:
+				if unitTokens: aggregatedTokens.append(unitTokens)
+				unitTokens = []
+				aggregatedTokens.append(token)
 		else:
-			aggregatedTokens.append(getNextToken(tokens))
+			raise UC_Common.UnitError(f"Unknown token; received '{token}'")
 
+	if unitTokens: aggregatedTokens.append(unitTokens)
+	return aggregatedTokens
+
+def aggregateQuantities(tokens):
+	"""
+	Combine tokens which constitute a quantity
+	@param tokens: a list of tokens
+	"""
+	aggregatedTokens = []
+	needsValue = False
+
+	while tokens:
+		if isOperator(tokens[0]):
+			aggregatedTokens.append(tokens.pop(0))
+			needsValue = True
+		elif isSpecialChar(tokens[0]):
+			aggregatedTokens.append(tokens.pop(0))
+		else:
+			needsValue = False
+
+			# Get value
+			quantity = '1'
+			try:
+				float(tokens[0])
+				quantity = tokens.pop(0)
+			except: pass
+
+			# Get unit
+			unit = []
+			if tokens and isinstance(tokens[0], list):
+				unit = tokens.pop(0)
+
+			aggregatedTokens.append((quantity, unit))
+	if needsValue: raise UC_Common.UnitError(f"Expected float; no tokens received")
+
+	return aggregatedTokens
+
+def aggregate(tokens):
+	aggregatedTokens = aggregateUnits(tokens)
+	# return aggregatedTokens
+	aggregatedTokens = aggregateQuantities(aggregatedTokens)
 	return aggregatedTokens
 
 def parseUnitStr(toParse):
@@ -231,7 +277,7 @@ def parseUnitStr(toParse):
 		elif len(vals) == 2:
 			unitMap[sym] += int(vals[1])
 		else:
-			raise UnitError(f"Invalid unit: '{component}'")
+			raise UC_Common.UnitError(f"Invalid unit: '{component}'")
 	
 	return unitMap
 
