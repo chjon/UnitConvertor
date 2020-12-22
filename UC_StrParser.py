@@ -25,8 +25,7 @@ def isOperator(char):
 	Determine whether a character is an operator
 	@param char: the character to check
 	"""
-	if isinstance(char, tuple): return False
-	return char in operatorPrecedences
+	return str(char) in operatorPrecedences
 
 def isSpecialChar(char):
 	"""
@@ -60,23 +59,39 @@ def tokenize(line):
 	token = ''
 	
 	# Identify tokens
+	parseFloatState = 0
 	for char in line:
-		if UC_Utils.isWhitespace(char):
-			if token:
-				tokens.append(token)
-				token = ""
-		elif isSpecialChar(char):
-			if token:
-				tokens.append(token)
-				token = ""
-			tokens.append(char)
-		else:
-			token += char
-	
-	if token:
-		tokens.append(token)
-		token = ""
+		# State machine for parsing floats as a single token
+		# Floats are a special case because '+' and '-' are valid components
+		if parseFloatState == 0 and char.isnumeric():
+			parseFloatState = 1
+			if token: tokens.append(token)
+			token = ""
+		elif parseFloatState == 1:
+			if char == '.': parseFloatState = 2
+			elif char == 'e': parseFloatState = 3
+			elif not char.isnumeric(): parseFloatState = 0
+		elif parseFloatState == 2:
+			if char == 'e': parseFloatState = 3
+			elif not char.isnumeric(): parseFloatState = 0
+		elif parseFloatState == 3:
+			if char == '+' or char == '-': parseFloatState = 4
+			elif not char.isnumeric(): parseFloatState = 0
+		elif parseFloatState == 4:
+			if not char.isnumeric(): parseFloatState = 0
 
+		# Handle non-float tokens
+		if parseFloatState: token += char
+		elif UC_Utils.isWhitespace(char):
+			if token: tokens.append(token)
+			token = ""
+		elif isSpecialChar(char):
+			if token: tokens.append(token)
+			token = ""
+			tokens.append(char)
+		else: token += char
+	
+	if token: tokens.append(token)
 	return tokens
 
 def convertToRPN(tokens):
@@ -133,31 +148,6 @@ def getNextToken(tokens: list = [], expectedToken = None):
 	if expectedToken and token != expectedToken: raise UnitError(f"Expected '{expectedToken}'; received '{token}'")
 	return token
 
-def aggregateUnit(tokens):
-	# Find the index of the next quantity
-	index = 1
-	openedBrackets = 0
-	for i, token in enumerate(tokens):
-		if token == BRACKET_OPEN: openedBrackets += 1
-		elif token == BRACKET_SHUT: openedBrackets -= 1
-		elif openedBrackets == -1:
-			index = i - 1
-			break
-		elif openedBrackets == 0:
-			try:
-				float(token)
-				index = i - 1
-				break
-			except: pass
-	
-	# Aggregate tokens belonging to the same unit
-	index = max(1, index)
-	aggregatedUnit = tokens[:index]
-
-	# Pop used tokens from list
-	del tokens[:index]
-	return aggregatedUnit
-
 def aggregateUnits(tokens):
 	"""
 	Combine tokens which constitute compound units
@@ -166,37 +156,26 @@ def aggregateUnits(tokens):
 	aggregatedTokens = []
 
 	while tokens:
-		# Handle brackets
-		closingBrackets = 0
-		if tokens and tokens[0] == BRACKET_OPEN:
-			aggregatedTokens.append(tokens.pop(0))
-			continue
-
-		# Get the quantity associated with the unit
-		quantity = None
-		try:
-			quantity = float(tokens[0])
-			tokens.pop(0)
-			while tokens and tokens[0] == BRACKET_SHUT:
-				tokens.pop(0)
-				closingBrackets += 1
-		except: pass
-
-		# Get the unit
-		unitTokens = []
-		if tokens and UC_Utils.isValidSymbol(tokens[0]): unitTokens = aggregateUnit(tokens)
-		while tokens and tokens[0] == BRACKET_SHUT:
-			tokens.pop(0)
-			closingBrackets += 1
-		
-		# Add the quantity to the list of aggregated tokens
-		if quantity or unitTokens: aggregatedTokens.append((quantity, unitTokens))
-		
-		# Handle closing brackets
-		for i in range(closingBrackets): aggregatedTokens.append(BRACKET_SHUT)
-
-		# Get operator
-		if tokens and isOperator(tokens[0]): aggregatedTokens.append(tokens.pop(0))
+		if UC_Utils.isValidSymbol(tokens[0]):
+			aggregatedUnit = []
+			while tokens and UC_Utils.isValidSymbol(tokens[0]):
+				aggregatedUnit.append(getNextToken(tokens))
+				if len(tokens) > 1 and isOperator(tokens[0]):
+					if tokens[0] == OPERATOR_EXP:
+						try:
+							int(tokens[1])
+							aggregatedUnit.append(getNextToken(tokens))
+							aggregatedUnit.append(getNextToken(tokens))
+							continue
+						except: pass
+					elif tokens[0] == OPERATOR_MUL or tokens[0] == OPERATOR_DIV:
+						if UC_Utils.isValidSymbol(tokens[1]):
+							aggregatedUnit.append(getNextToken(tokens))
+							continue
+				break
+			aggregatedTokens.append(aggregatedUnit)
+		else:
+			aggregatedTokens.append(getNextToken(tokens))
 
 	return aggregatedTokens
 
