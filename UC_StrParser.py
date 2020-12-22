@@ -181,25 +181,44 @@ def aggregateUnits(tokens):
 				parsingExp += 1
 				unitTokens.append(token)
 			else:
-				if unitTokens: aggregatedTokens.append(unitTokens)
+				if unitTokens:
+					if isOperator(unitTokens[-1]):
+						operator = unitTokens.pop()
+						aggregatedTokens.append(unitTokens)
+						aggregatedTokens.append(operator)
+					else: aggregatedTokens.append(unitTokens)
 				unitTokens = []
 				aggregatedTokens.append(token)
 		elif token == BRACKET_SHUT:
 			if parsingExp:
 				parsingExp -= 1
 				unitTokens.append(token)
-				if parsingExp == 1: parsingExp = 0
+				if parsingExp == 1:
+					parsingExp = 0
+					if tokens and isOperator(tokens[0]): unitTokens.append(tokens.pop(0))
 			else:
-				if unitTokens: aggregatedTokens.append(unitTokens)
+				if unitTokens:
+					if isOperator(unitTokens[-1]):
+						operator = unitTokens.pop()
+						aggregatedTokens.append(unitTokens)
+						aggregatedTokens.append(operator)
+					else: aggregatedTokens.append(unitTokens)
 				unitTokens = []
 				aggregatedTokens.append(token)
 		elif UC_Utils.isFloat(token):
 			if parsingExp:
 				if not UC_Utils.isInt(token): raise UC_Common.UnitError(f"Expected int; received '{token}'")
-				if parsingExp == 1: parsingExp = 0
 				unitTokens.append(token)
+				if parsingExp == 1:
+					parsingExp = 0
+					if tokens and isOperator(tokens[0]): unitTokens.append(tokens.pop(0))
 			else:
-				if unitTokens: aggregatedTokens.append(unitTokens)
+				if unitTokens:
+					if isOperator(unitTokens[-1]):
+						operator = unitTokens.pop()
+						aggregatedTokens.append(unitTokens)
+						aggregatedTokens.append(operator)
+					else: aggregatedTokens.append(unitTokens)
 				unitTokens = []
 				aggregatedTokens.append(token)
 		elif UC_Utils.isValidSymbol(token):
@@ -215,7 +234,12 @@ def aggregateUnits(tokens):
 		elif isOperator(token):
 			if parsingExp: unitTokens.append(token)
 			else:
-				if unitTokens: aggregatedTokens.append(unitTokens)
+				if unitTokens:
+					if isOperator(unitTokens[-1]):
+						operator = unitTokens.pop()
+						aggregatedTokens.append(unitTokens)
+						aggregatedTokens.append(operator)
+					else: aggregatedTokens.append(unitTokens)
 				unitTokens = []
 				aggregatedTokens.append(token)
 		else:
@@ -260,26 +284,12 @@ def aggregateQuantities(tokens):
 
 def aggregate(tokens):
 	aggregatedTokens = aggregateUnits(tokens)
-	# return aggregatedTokens
 	aggregatedTokens = aggregateQuantities(aggregatedTokens)
 	return aggregatedTokens
 
-def parseUnitStr(toParse):
-	unitMap = {}
-	toParse = toParse.strip()
-	components = toParse.split(' ')
-	for component in components:
-		vals = component.split('^')
-		sym = vals[0]
-		if not (sym in unitMap): unitMap[sym] = 0
-		if len(vals) == 1:
-			unitMap[sym] += 1
-		elif len(vals) == 2:
-			unitMap[sym] += int(vals[1])
-		else:
-			raise UC_Common.UnitError(f"Invalid unit: '{component}'")
-	
-	return unitMap
-
 # TODO: Implement this!
-def parseUnitExpr(string): pass
+def parseExpr(string):
+	tokens = tokenize(string)
+	tokens = aggregate(tokens)
+	rpnTokens = convertToRPN(tokens)
+	return rpnTokens

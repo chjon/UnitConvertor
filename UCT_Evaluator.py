@@ -68,6 +68,10 @@ def test_aggregation(verbose = False):
 		[("1", ["cm", "^", "2"])],
 	verbose)
 	test_result += aggregation_expect(
+		["1", "cm", "^", "-", "2"],
+		[("1", ["cm", "^", "-", "2"])],
+	verbose)
+	test_result += aggregation_expect(
 		["1", "cm", "^", "(", "2", ")"],
 		[("1", ["cm", "^", "(", "2", ")"])],
 	verbose)
@@ -82,6 +86,22 @@ def test_aggregation(verbose = False):
 	test_result += aggregation_expect(
 		["1", "cm", "^", "(", "cm", ")"],
 		None,
+	verbose)
+	test_result += aggregation_expect(
+		["1", "cm", "^", "2", "m"],
+		[("1", ["cm", "^", "2", "m"])],
+	verbose)
+	test_result += aggregation_expect(
+		["1", "cm", "^", "2", "*", "m"],
+		[("1", ["cm", "^", "2", "*", "m"])],
+	verbose)
+	test_result += aggregation_expect(
+		["1", "cm", "^", "2", "*", "1"],
+		[("1", ["cm", "^", "2"]), "*", ("1", [])],
+	verbose)
+	test_result += aggregation_expect(
+		["1", "cm", "^", "2", "*", "1", "m"],
+		[("1", ["cm", "^", "2"]), "*", ("1", ["m"])],
 	verbose)
 
 	# Test values/units with no immediately adjacent units/values
@@ -100,14 +120,15 @@ def test_aggregation(verbose = False):
 
 	return test_result
 
+def test_rpn_conversion(verbose = False):
+	test_result = 0
+	return test_result
+
 def test_parser(verbose = False):
 	test_result = 0
 
-	# tokens = UC_StrParser.tokenize("15 cm^2-1.7e-17 mm *8mm +1e+1.e + 1.3e +1.4e-e 3.4 m^(0+1)")
-	# print(tokens)
-	# tokens = UC_StrParser.aggregate(tokens)
-	# print(tokens)
-	# tokens = UC_StrParser.convertToRPN(tokens)
+	tokens = UC_StrParser.parseExpr("15 cm^2 / m^2 + 18")
+	print(tokens)
 
 	return test_result
 
@@ -116,6 +137,7 @@ def main():
 	verbose = True
 	print(f"test_tokenization: {test_tokenization(verbose)} tests failed")
 	print(f"test_aggregation: {test_aggregation(verbose)} tests failed")
+	print(f"test_rpn_conversion: {test_rpn_conversion(verbose)} tests failed")
 	print(f"test_parser: {test_parser(verbose)} tests failed")
 
 if (__name__ == "__main__"):
