@@ -16,6 +16,7 @@ def test_tokenization(verbose = False):
 	test_result += tokenization_expect("1", ["1"], verbose)
 	test_result += tokenization_expect(".1", [".1"], verbose)
 	test_result += tokenization_expect("1.", ["1."], verbose)
+	test_result += tokenization_expect(".", ["."], verbose)
 	test_result += tokenization_expect("1.0", ["1.0"], verbose)
 	test_result += tokenization_expect("1e", ["1", "e"], verbose)
 	test_result += tokenization_expect("1.e", ["1.", "e"], verbose)
@@ -35,7 +36,7 @@ def test_tokenization(verbose = False):
 	test_result += tokenization_expect("a", ["a"], verbose)
 	test_result += tokenization_expect("  a  ", ["a"], verbose)
 	test_result += tokenization_expect("a^2", ["a", "^", "2"], verbose)
-	test_result += tokenization_expect("a*(b+c)^2", ["a", "*", "(", "b", "+", "c", ")", "^", "2"], verbose)
+	test_result += tokenization_expect("a*(b+c)^2 cm = m", ["a", "*", "(", "b", "+", "c", ")", "^", "2", "cm", "=", "m"], verbose)
 
 	return test_result
 

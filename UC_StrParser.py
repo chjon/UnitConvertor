@@ -6,6 +6,7 @@ OPERATOR_MUL = '*'
 OPERATOR_DIV = '/'
 OPERATOR_ADD = '+'
 OPERATOR_SUB = '-'
+OPERATOR_EQL = '='
 BRACKET_OPEN = '('
 BRACKET_SHUT = ')'
 
@@ -18,6 +19,7 @@ operatorPrecedences = {
 	OPERATOR_DIV: (2, 0),
 	OPERATOR_ADD: (1, 0),
 	OPERATOR_SUB: (1, 0),
+	OPERATOR_EQL: (0, 0),
 }
 
 def isOperator(char):
@@ -50,8 +52,16 @@ def hasHigherPrecedence(operatorA, operatorB):
 	return (precedenceA > precedenceB) or (precedenceA == precedenceB and associativityB == 1)
 
 def tokenizeFloat(token, tokens, char, parseFloatState):
-	# State machine for parsing floats as a single token
-	# Floats are a special case because '+' and '-' are valid components
+	"""
+	Incrementally parse floats as a single token
+	Floats are a special case of tokenization because '+' and '-' are valid components
+	@param token: the token that has been built so far
+	@param tokens: the list of tokens to modify
+	@param char: the next character
+	@param parseFloatState: the current state of the state machine
+	@return token: the modified token after advancing one character
+	@return parseFloatState: the next state machine state to move to 
+	"""
 	if parseFloatState == 0:
 		if char.isnumeric():
 			parseFloatState = 1
