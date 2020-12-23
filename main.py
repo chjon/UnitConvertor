@@ -19,6 +19,7 @@ def command_help(args):
 	}
 
 	inputExamples = [
+		"60 mph : m/s",
 		"100 kg * 9.8 m/s^2 : N",
 		"500 N / 12 mm^2 : kPA",
 		"123.4 lb / (5 ft + 6 in)^2 : BMI",
@@ -41,7 +42,7 @@ def command_save(args):
 
 commands = {
 	COMMAND_EXIT: (lambda args: exit()),
-	COMMAND_HELP: (lambda args: command_help(helpStrings)),
+	COMMAND_HELP: (lambda args: command_help(args)),
 	COMMAND_LOAD: (lambda args: command_load(args)),
 	COMMAND_SAVE: (lambda args: command_save(args)),
 }
@@ -57,8 +58,9 @@ def main():
 			try:
 				ast = UC_StrParser.parseExpr(line)
 				print(f"Interpreting input as: '{str(ast)}'")
+				print(f"{str(ast.evaluate())}")
 			except UnitError as err:
-				print(err)
+				print(f"Error: {err}")
 
 if (__name__ == "__main__"):
 	main()
