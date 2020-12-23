@@ -10,20 +10,20 @@ COMMAND_LOAD = "load"
 COMMAND_SAVE = "save"
 units, conversions, prefixes = {}, {}, {}
 
-helpStrings = {
-	COMMAND_EXIT: "Exit the program",
-	COMMAND_HELP: "Print this text",
-	COMMAND_LOAD: "Unload current definitions and load definitions from file",
-	COMMAND_SAVE: "Save currently-loaded definitions to file",
-}
-
-inputExamples = [
-	"100 kg * 9.8 m/s^2 : N",
-	"500 N / 12 mm^2 : kPA",
-	"123.4 lb / (5 ft + 6 in)^2 : BMI",
-]
-
 def command_help(args):
+	helpStrings = {
+		COMMAND_EXIT: "Exit the program",
+		COMMAND_HELP: "Print this text",
+		COMMAND_LOAD: "Unload current definitions and load definitions from file",
+		COMMAND_SAVE: "Save currently-loaded definitions to file",
+	}
+
+	inputExamples = [
+		"100 kg * 9.8 m/s^2 : N",
+		"500 N / 12 mm^2 : kPA",
+		"123.4 lb / (5 ft + 6 in)^2 : BMI",
+	]
+
 	print("--------------------------")
 	print("Available commands:")
 	for command, helpString in helpStrings.items(): print(f"   {command}: {helpString}")
