@@ -1,57 +1,7 @@
-import UC_Common
-import UC_Utils
+from UC_Common import *
+from UC_Utils import *
 import UC_Unit
 import UC_AST
-
-OPERATOR_EXP = '^'
-OPERATOR_MUL = '*'
-OPERATOR_DIV = '/'
-OPERATOR_ADD = '+'
-OPERATOR_SUB = '-'
-OPERATOR_EQL = ':'
-BRACKET_OPEN = '('
-BRACKET_SHUT = ')'
-
-# Map of operator to precedence and associativity
-# A larger precedence value means that the operator is higher precedence
-# An associativity of 1 means that the operator is left associative
-operatorPrecedences = {
-	OPERATOR_EXP: (3, 0),
-	OPERATOR_MUL: (2, 1),
-	OPERATOR_DIV: (2, 1),
-	OPERATOR_ADD: (1, 1),
-	OPERATOR_SUB: (1, 1),
-	OPERATOR_EQL: (0, 1),
-}
-
-def isOperator(char):
-	"""
-	Determine whether a character is an operator
-	@param char: the character to check
-	"""
-	return str(char) in operatorPrecedences
-
-def isSpecialChar(char):
-	"""
-	Determine whether a character is its own token
-	@param char: the character to check
-	"""
-	return (
-		isOperator(char) or
-		char == BRACKET_OPEN or
-		char == BRACKET_SHUT
-	)
-
-def hasHigherPrecedence(operatorA, operatorB):
-	"""
-	Determine whether an operator has higher precedence
-	@param operatorA: the first operator
-	@param operatorB: the second operator
-	@return True if operatorA has higher precedence
-	"""
-	precedenceA, associativityA = operatorPrecedences[operatorA]
-	precedenceB, associativityB = operatorPrecedences[operatorB]
-	return (precedenceA > precedenceB) or (precedenceA == precedenceB and associativityB == 1)
 
 def tokenizeFloat(token, tokens, char, parseFloatState):
 	"""
@@ -122,7 +72,7 @@ def tokenize(line):
 
 		# Handle non-float tokens
 		if parseFloatState: token += char
-		elif UC_Utils.isWhitespace(char):
+		elif isWhitespace(char):
 			if token: tokens.append(token)
 			token = ""
 		elif isSpecialChar(char):
@@ -149,7 +99,7 @@ def convertToRPN(tokens):
 			while operatorStack and operatorStack[-1] != BRACKET_OPEN:
 				outputQueue.append(operatorStack.pop())
 			if operatorStack.pop() != BRACKET_OPEN:
-				raise UC_Common.UnitError(f"Detected mismatched parentheses: '{BRACKET_SHUT}'")
+				raise UnitError(f"Detected mismatched parentheses: '{BRACKET_SHUT}'")
 		elif isOperator(token):
 			while (
 				operatorStack and
@@ -162,7 +112,7 @@ def convertToRPN(tokens):
 	
 	while operatorStack:
 		if operatorStack[-1] == BRACKET_OPEN:
-			raise UC_Common.UnitError(f"Detected mismatched parentheses: '{BRACKET_OPEN}'")
+			raise UnitError(f"Detected mismatched parentheses: '{BRACKET_OPEN}'")
 		outputQueue.append(operatorStack.pop())
 
 	return outputQueue
@@ -184,7 +134,7 @@ def aggregateSign(tokens, updatedTokens = []):
 			elif ((token == OPERATOR_ADD or token == OPERATOR_SUB) and
 				(not updatedTokens or isSpecialChar(updatedTokens[-1]))
 			):
-				if tokens and UC_Utils.isFloat(tokens[0]):
+				if tokens and isFloat(tokens[0]):
 					updatedTokens.append(f"{token}{tokens.pop(0)}")
 				else:
 					updatedTokens.extend([BRACKET_OPEN, f"{token}1", OPERATOR_MUL])
@@ -194,7 +144,7 @@ def aggregateSign(tokens, updatedTokens = []):
 	
 	updatedTokens = []
 	aggregateSignHelper(tokens, updatedTokens)
-	if tokens: raise UC_Common.UnitError(f"Detected mismatched parentheses: '{BRACKET_SHUT}'")
+	if tokens: raise UnitError(f"Detected mismatched parentheses: '{BRACKET_SHUT}'")
 	return updatedTokens
 
 def aggregateUnits(tokens):
@@ -229,7 +179,7 @@ def aggregateUnits(tokens):
 		if tokens:
 			if isOperator(tokens[0]):
 				unitTokens.append(tokens.pop(0))
-			elif UC_Utils.isValidSymbol(tokens[0]):
+			elif isValidSymbol(tokens[0]):
 				unitTokens.append(OPERATOR_MUL)
 		return 0
 	
@@ -241,12 +191,12 @@ def aggregateUnits(tokens):
 				return True
 			elif operator == OPERATOR_MUL or operator == OPERATOR_DIV:
 				unitTokens.append(tokens.pop(0))
-			elif UC_Utils.isValidSymbol(operator):
+			elif isValidSymbol(operator):
 				unitTokens.append(OPERATOR_MUL)
 		return parsingExp
 
 	while tokens:
-		token = UC_Utils.getNextToken(tokens)
+		token = getNextToken(tokens)
 		if token == BRACKET_OPEN:
 			if parsingExp:
 				unitTokens.append(token)
@@ -257,20 +207,20 @@ def aggregateUnits(tokens):
 				unitTokens.append(token)
 				parsingExp = handleParseExpDecrement(tokens, unitTokens, parsingExp - 1)
 			else: unitTokens = appendUnitTokens(aggregatedTokens, unitTokens, token)
-		elif UC_Utils.isFloat(token):
+		elif isFloat(token):
 			if parsingExp:
-				if not UC_Utils.isInt(token): raise UC_Common.UnitError(f"Expected int; received '{token}'")
+				if not isInt(token): raise UnitError(f"Expected int; received '{token}'")
 				unitTokens.append(token)
 				parsingExp = handleParseExpDecrement(tokens, unitTokens, parsingExp)
 			else: unitTokens = appendUnitTokens(aggregatedTokens, unitTokens, token)
-		elif UC_Utils.isValidSymbol(token):
-			if parsingExp: raise UC_Common.UnitError(f"Expected int; received '{token}'")
+		elif isValidSymbol(token):
+			if parsingExp: raise UnitError(f"Expected int; received '{token}'")
 			unitTokens.append(token)
 			parsingExp = handleAppendUnitSymbol(tokens, unitTokens, parsingExp)
 		elif isOperator(token):
-			if parsingExp: raise UC_Common.UnitError(f"Expected int; received '{token}'")
+			if parsingExp: raise UnitError(f"Expected int; received '{token}'")
 			else: unitTokens = appendUnitTokens(aggregatedTokens, unitTokens, token)
-		else: raise UC_Common.UnitError(f"Unknown token; received '{token}'")
+		else: raise UnitError(f"Unknown token; received '{token}'")
 
 	appendUnitTokens(aggregatedTokens, unitTokens)
 	return aggregatedTokens
@@ -285,7 +235,7 @@ def aggregateQuantities(tokens):
 
 	while tokens:
 		if isOperator(tokens[0]):
-			if needsValue: raise UC_Common.UnitError(f"Expected float; received '{tokens[0]}'")
+			if needsValue: raise UnitError(f"Expected float; received '{tokens[0]}'")
 			aggregatedTokens.append(tokens.pop(0))
 			needsValue = True
 		elif isSpecialChar(tokens[0]):
@@ -309,7 +259,7 @@ def aggregateQuantities(tokens):
 				unit = tokens.pop(0)
 
 			aggregatedTokens.append((quantity, unit))
-	if needsValue and aggregatedTokens: raise UC_Common.UnitError(f"Expected float; no tokens received")
+	if needsValue and aggregatedTokens: raise UnitError(f"Expected float; no tokens received")
 
 	return aggregatedTokens
 
@@ -326,15 +276,15 @@ def parseUnit(tokens):
 	for token in tokens:
 		if token == OPERATOR_ADD:
 			a = stack.pop()
-			if not isinstance(a, int): raise UC_Common.UnitError(f"Expected int; received '{a}'")
+			if not isinstance(a, int): raise UnitError(f"Expected int; received '{a}'")
 			b = stack.pop()
-			if not isinstance(b, int): raise UC_Common.UnitError(f"Expected int; received '{b}'")
+			if not isinstance(b, int): raise UnitError(f"Expected int; received '{b}'")
 			stack.append(b + a)
 		elif token == OPERATOR_SUB:
 			a = stack.pop()
-			if not isinstance(a, int): raise UC_Common.UnitError(f"Expected int; received '{a}'")
+			if not isinstance(a, int): raise UnitError(f"Expected int; received '{a}'")
 			b = stack.pop()
-			if not isinstance(b, int): raise UC_Common.UnitError(f"Expected int; received '{b}'")
+			if not isinstance(b, int): raise UnitError(f"Expected int; received '{b}'")
 			stack.append(b - a)
 		elif token == OPERATOR_MUL:
 			a = stack.pop()
@@ -357,10 +307,10 @@ def parseUnit(tokens):
 		elif token == OPERATOR_EXP:
 			a = stack.pop()
 			b = stack.pop()
-			if not isinstance(a, int): raise UC_Common.UnitError(f"Expected int; received '{a}'")
+			if not isinstance(a, int): raise UnitError(f"Expected int; received '{a}'")
 			stack.append({b: a})
 		else:
-			if UC_Utils.isInt(token): stack.append(int(token))
+			if isInt(token): stack.append(int(token))
 			else: stack.append(token)
 
 	# Aggregate into a single map
@@ -371,10 +321,10 @@ def parseUnit(tokens):
 			for sym, exp in top.items():
 				if sym not in units: units[sym] = 0
 				units[sym] += exp
-		elif UC_Utils.isValidSymbol(top):
+		elif isValidSymbol(top):
 			if top not in units: units[top] = 0
 			units[top] += 1
-		else: raise UC_Common.UnitError("Invalid expression")
+		else: raise UnitError("Invalid expression")
 	return units
 
 def parseExpr(tokens):
@@ -411,7 +361,7 @@ def parseExpr(tokens):
 			unit = UC_Unit.Unit(baseUnits = baseUnits)
 			stack.append(UC_Unit.Quantity(val, unit))
 	if not stack: return ""
-	if len(stack) != 1: raise UC_Common.UnitError("Invalid expression")
+	if len(stack) != 1: raise UnitError("Invalid expression")
 	return stack[0]
 
 def parse(string):
