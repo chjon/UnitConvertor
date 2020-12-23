@@ -72,7 +72,7 @@ def test_aggregation(verbose = False):
 	verbose)
 	test_result += aggregation_expect(
 		["1", "cm", "^", "-", "2"],
-		[("1", ["cm", "^", "-", "2"])],
+		None,
 	verbose)
 	test_result += aggregation_expect(
 		["1", "cm", "^", "(", "2", ")"],
@@ -80,11 +80,11 @@ def test_aggregation(verbose = False):
 	verbose)
 	test_result += aggregation_expect(
 		["1", "cm", "^", "(", "-", "2", ")"],
-		[("1", ["cm", "^", "(", "-", "2", ")"])],
+		None,
 	verbose)
 	test_result += aggregation_expect(
 		["1", "cm", "^", "(", "2", "+", "1", ")"],
-		[("1", ["cm", "^", "(", "2", "+", "1", ")"])],
+		None,
 	verbose)
 	test_result += aggregation_expect(
 		["1", "cm", "^", "(", "cm", ")"],
@@ -216,6 +216,7 @@ def test_parser(verbose = False):
 
 	# Test multi-unit expressions
 	# FIXME: Test using AST equality instead
+	test_result += parseExpr_expect(["+1"], "1.0", verbose)
 	test_result += parseExpr_expect(["1", "cm"], "1.0 cm", verbose)
 	test_result += parseExpr_expect(["1", "cm", "=", "1", "m"], "1.0 cm = 1.0 m", verbose)
 	test_result += parseExpr_expect(["1", "cm", "+", "1", "m"], "(1.0 cm + 1.0 m)", verbose)

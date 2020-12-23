@@ -8,7 +8,7 @@ OPERATOR_MUL = '*'
 OPERATOR_DIV = '/'
 OPERATOR_ADD = '+'
 OPERATOR_SUB = '-'
-OPERATOR_EQL = '='
+OPERATOR_EQL = ':'
 BRACKET_OPEN = '('
 BRACKET_SHUT = ')'
 
@@ -176,9 +176,12 @@ def replaceNegation(tokens):
 	while tokens:
 		token = tokens.pop(0)
 		if ((token == OPERATOR_ADD or token == OPERATOR_SUB) and
-			(updatedTokens) and
-			(isOperator(updatedTokens[-1]))
-		): updatedTokens.extend([OPERATOR_MUL, f"{token}1"])
+			(not updatedTokens or isSpecialChar(updatedTokens[-1]))
+		):
+			if tokens and UC_Utils.isFloat(tokens[0]):
+				updatedTokens.append(f"{token}{tokens.pop(0)}")
+			else:
+				updatedTokens.extend([f"{token}1", OPERATOR_MUL])
 		else: updatedTokens.append(token)
 	return updatedTokens
 
@@ -199,7 +202,7 @@ def aggregateUnits(tokens):
 				unitTokens.append(token)
 			else:
 				if unitTokens:
-					if isOperator(unitTokens[-1]):
+					if unitTokens[-1] == OPERATOR_MUL or unitTokens[-1] == OPERATOR_DIV:
 						operator = unitTokens.pop()
 						aggregatedTokens.append(unitTokens)
 						aggregatedTokens.append(operator)
@@ -219,7 +222,7 @@ def aggregateUnits(tokens):
 							unitTokens.append(OPERATOR_MUL)
 			else:
 				if unitTokens:
-					if isOperator(unitTokens[-1]):
+					if unitTokens[-1] == OPERATOR_MUL or unitTokens[-1] == OPERATOR_DIV:
 						operator = unitTokens.pop()
 						aggregatedTokens.append(unitTokens)
 						aggregatedTokens.append(operator)
@@ -239,7 +242,7 @@ def aggregateUnits(tokens):
 							unitTokens.append(OPERATOR_MUL)
 			else:
 				if unitTokens:
-					if isOperator(unitTokens[-1]):
+					if unitTokens[-1] == OPERATOR_MUL or unitTokens[-1] == OPERATOR_DIV:
 						operator = unitTokens.pop()
 						aggregatedTokens.append(unitTokens)
 						aggregatedTokens.append(operator)
@@ -254,15 +257,15 @@ def aggregateUnits(tokens):
 				if operator == OPERATOR_EXP:
 					unitTokens.append(tokens.pop(0))
 					parsingExp = True
-				elif isOperator(operator):
+				elif operator == OPERATOR_MUL or operator == OPERATOR_DIV:
 					unitTokens.append(tokens.pop(0))
 				elif UC_Utils.isValidSymbol(operator):
 					unitTokens.append(OPERATOR_MUL)
 		elif isOperator(token):
-			if parsingExp: unitTokens.append(token)
+			if parsingExp: raise UC_Common.UnitError(f"Expected int; received '{token}'")
 			else:
 				if unitTokens:
-					if isOperator(unitTokens[-1]):
+					if unitTokens[-1] == OPERATOR_MUL or unitTokens[-1] == OPERATOR_DIV:
 						operator = unitTokens.pop()
 						aggregatedTokens.append(unitTokens)
 						aggregatedTokens.append(operator)
