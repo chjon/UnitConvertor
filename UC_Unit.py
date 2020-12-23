@@ -111,7 +111,9 @@ class Quantity:
 		self.unit  = unit
 	
 	def __str__(self):
-		return f'{self.value} {str(self.unit)}'
+		unitStr = str(self.unit)
+		if unitStr: return f'{self.value} {unitStr}'
+		return f'{self.value}'
 
 	def __eq__(self, other):
 		if other is None: return False
