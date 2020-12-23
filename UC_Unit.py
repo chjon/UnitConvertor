@@ -140,4 +140,4 @@ class Quantity:
 		if other.unit.reduce().baseUnits: raise UC_Common.UnitError(f"Cannot exponentiate with unit '{str(other.unit)}'")
 		return Quantity(self.value ** other.value, self.unit ** other.value)
 	
-	def evaluate(self): return self
+	def evaluate(self, convertor): return self

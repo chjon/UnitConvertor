@@ -50,6 +50,35 @@ def isInt(string):
 	except: return False
 	return True
 
+def isOperator(char):
+	"""
+	Determine whether a character is an operator
+	@param char: the character to check
+	"""
+	return str(char) in UC_Common.operatorPrecedences
+
+def isSpecialChar(char):
+	"""
+	Determine whether a character is its own token
+	@param char: the character to check
+	"""
+	return (
+		isOperator(char) or
+		char == UC_Common.BRACKET_OPEN or
+		char == UC_Common.BRACKET_SHUT
+	)
+
+def hasHigherPrecedence(operatorA, operatorB):
+	"""
+	Determine whether an operator has higher precedence
+	@param operatorA: the first operator
+	@param operatorB: the second operator
+	@return True if operatorA has higher precedence
+	"""
+	precedenceA, associativityA = UC_Common.operatorPrecedences[operatorA]
+	precedenceB, associativityB = UC_Common.operatorPrecedences[operatorB]
+	return (precedenceA > precedenceB) or (precedenceA == precedenceB and associativityB == 1)
+
 def peekNextToken(tokens: list = []):
 	"""
 	Get the next token without removing it from the queue
