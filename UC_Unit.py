@@ -1,3 +1,5 @@
+import UC_Common
+
 class Unit:
 	def isBaseUnit(self):
 		return self.sym != None and len(self.baseUnits) == 0
@@ -43,6 +45,7 @@ class Unit:
 		return outStr.strip()
 
 	def __eq__(self, other):
+		if other is None: return False
 		if self.sym == other.sym: return True
 		selfUnits = self.reduce()
 		otherUnits = other.reduce()
@@ -93,6 +96,12 @@ class Unit:
 
 		return Unit(baseUnits = Unit(baseUnits = units).reduce())
 
+	def __pow__(self, power):
+		units = {}
+		for sym, exp in self.baseUnits.items():
+			units[sym] = exp * power
+		return Unit(baseUnits = units)
+
 	def clone(self):
 		return Unit(self.sym, self.baseUnits.copy())
 
@@ -102,20 +111,23 @@ class Quantity:
 		self.unit  = unit
 	
 	def __str__(self):
-		return f'{self.value} {str(self.unit)}'
+		unitStr = str(self.unit)
+		if unitStr: return f'{self.value} {unitStr}'
+		return f'{self.value}'
 
 	def __eq__(self, other):
+		if other is None: return False
 		return self.value == other.value and self.unit == other.unit
 
 	def __ne__(self, other):
 		return not (self == other)
 
 	def __add__(self, other):
-		if self.unit != other.unit: raise UnitError('Incompatible units')
+		if self.unit != other.unit: raise UC_Common.UnitError('Incompatible units')
 		return Quantity(self.value + other.value, self.unit.clone())
 
 	def __sub__(self, other):
-		if self.unit != other.unit: raise UnitError('Incompatible units')
+		if self.unit != other.unit: raise UC_Common.UnitError('Incompatible units')
 		return Quantity(self.value - other.value, self.unit.clone())
 
 	def __mul__(self, other):
@@ -123,3 +135,9 @@ class Quantity:
 	
 	def __truediv__(self, other):
 		return Quantity(self.value / other.value, self.unit / other.unit)
+
+	def __pow__(self, other):
+		if other.unit.reduce().baseUnits: raise UC_Common.UnitError(f"Cannot exponentiate with unit '{str(other.unit)}'")
+		return Quantity(self.value ** other.value, self.unit ** other.value)
+	
+	def evaluate(self): return self
