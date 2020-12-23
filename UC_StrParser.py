@@ -1,6 +1,7 @@
 import UC_Common
 import UC_Utils
 import UC_Unit
+import UC_AST
 
 OPERATOR_EXP = '^'
 OPERATOR_MUL = '*'
@@ -376,22 +377,35 @@ def parseExpr(string):
 	stack = []
 	for token in tokens:
 		if token == OPERATOR_ADD:
-			stack.append(f"{stack.pop()} + {stack.pop()}")
-		if token == OPERATOR_SUB:
-			stack.append(f"{stack.pop()} - {stack.pop()}")
-		if token == OPERATOR_MUL:
-			stack.append(f"{stack.pop()} * {stack.pop()}")
-		if token == OPERATOR_DIV:
-			stack.append(f"{stack.pop()} / {stack.pop()}")
-		if token == OPERATOR_EXP:
-			stack.append(f"{stack.pop()} ^ {stack.pop()}")
+			a = stack.pop()
+			b = stack.pop()
+			stack.append(UC_AST.AST_Add(b, a))
+		elif token == OPERATOR_SUB:
+			a = stack.pop()
+			b = stack.pop()
+			stack.append(UC_AST.AST_Sub(b, a))
+		elif token == OPERATOR_MUL:
+			a = stack.pop()
+			b = stack.pop()
+			stack.append(UC_AST.AST_Mul(b, a))
+		elif token == OPERATOR_DIV:
+			a = stack.pop()
+			b = stack.pop()
+			stack.append(UC_AST.AST_Div(b, a))
+		elif token == OPERATOR_EXP:
+			a = stack.pop()
+			b = stack.pop()
+			stack.append(UC_AST.AST_Exp(b, a))
+		elif token == OPERATOR_EQL:
+			a = stack.pop()
+			b = stack.pop()
+			stack.append(UC_AST.AST_Eql(b, a))
 		else:
 			valStr, unitTokens = token
 			val = float(valStr)
-			unit = parseUnit(unitTokens)
-			stack.append((val, unit))
-
+			baseUnits = parseUnit(unitTokens)
+			unit = UC_Unit.Unit(baseUnits = baseUnits)
+			stack.append(UC_Unit.Quantity(val, unit))
 	if not stack: return ""
 	if len(stack) != 1: raise UC_Common.UnitError("Invalid expression")
-
-	return tokens
+	return stack[0]

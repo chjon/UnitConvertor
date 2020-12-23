@@ -194,11 +194,11 @@ def parseUnit_expect(tokens, expected, verbose):
 def parseExpr_expect(string, expected, verbose):
 	if expected == None:
 		try:
-			result = UC_StrParser.parseExpr(string)
+			result = str(UC_StrParser.parseExpr(string))
 			return test_fail(f"Received '{result}'; expected error", verbose)
 		except: return 0
 	else:
-		result = UC_StrParser.parseExpr(string)
+		result = str(UC_StrParser.parseExpr(string))
 		if result != expected: return test_fail(f"Received '{result}'; expected '{expected}'", verbose)
 		return 0
 
@@ -215,7 +215,16 @@ def test_parser(verbose = False):
 	test_result += parseUnit_expect(["cm", "^", "cm"], None, verbose)
 
 	# Test multi-unit expressions
-	test_result += parseExpr_expect(["1", "cm", "+", "1", "cm"], None, verbose)
+	# FIXME: Test using AST equality instead
+	test_result += parseExpr_expect(["1", "cm"], "1.0 cm", verbose)
+	test_result += parseExpr_expect(["1", "cm", "=", "1", "m"], "1.0 cm = 1.0 m", verbose)
+	test_result += parseExpr_expect(["1", "cm", "+", "1", "m"], "(1.0 cm + 1.0 m)", verbose)
+	test_result += parseExpr_expect(["1", "cm", "-", "1", "m"], "(1.0 cm - 1.0 m)", verbose)
+	test_result += parseExpr_expect(["1", "cm", "*", "1", "m"], "(1.0 cm * 1.0 m)", verbose)
+	test_result += parseExpr_expect(["1", "cm", "/", "1", "m"], "(1.0 cm / 1.0 m)", verbose)
+	test_result += parseExpr_expect(["1", "cm", "^", "1", "cm"], "1.0 cm^(2)", verbose)
+	test_result += parseExpr_expect(["1", "cm", "^", "1", "m"], "1.0 m cm", verbose)
+	test_result += parseExpr_expect(["1", "cm", "^", "(", "1", "cm", ")"], None, verbose)
 
 	return test_result
 
