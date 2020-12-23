@@ -56,7 +56,7 @@ def main():
 		if command and (command[0] in commands): commands[command[0]](command)
 		else:
 			try:
-				ast = UC_StrParser.parseExpr(line)
+				ast = UC_StrParser.parse(line)
 				print(f"Interpreting input as: '{str(ast)}'")
 				print(f"{str(ast.evaluate())}")
 			except UnitError as err:
