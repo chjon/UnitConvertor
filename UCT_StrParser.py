@@ -37,20 +37,21 @@ def test_tokenization(verbose = False):
 	test_result += tokenization_expect("a2", ["a", "2"], verbose)
 	test_result += tokenization_expect("  a  ", ["a"], verbose)
 	test_result += tokenization_expect("a^2", ["a", "^", "2"], verbose)
-	test_result += tokenization_expect("a*(b+c)^2 cm = m", ["a", "*", "(", "b", "+", "c", ")", "^", "2", "cm", "=", "m"], verbose)
+	test_result += tokenization_expect(
+		"a*(b+c)^2 cm : m",
+		["a", "*", "(", "b", "+", "c", ")", "^", "2", "cm", ":", "m"],
+	verbose)
 
 	return test_result
 
 def aggregation_expect(tokens, expected, verbose):
 	if expected == None:
 		try:
-			tokens = UC_StrParser.aggregateUnits(tokens)
-			tokens = UC_StrParser.aggregateQuantities(tokens)
+			tokens = UC_StrParser.aggregate(tokens)
 			return test_fail(f"Received {tokens}; expected error", verbose)
 		except: return 0
 	else:
-		tokens = UC_StrParser.aggregateUnits(tokens)
-		tokens = UC_StrParser.aggregateQuantities(tokens)
+		tokens = UC_StrParser.aggregate(tokens)
 		if tokens != expected: return test_fail(f"Received {tokens}; expected {expected}", verbose)
 		return 0
 
@@ -65,6 +66,16 @@ def test_aggregation(verbose = False):
 	test_result += aggregation_expect(["1", "cm", "*", "m"], [("1", ["cm", "*", "m"])], verbose)
 	test_result += aggregation_expect(["(", "1", "cm", ")"], ["(", ("1", ["cm"]), ")"], verbose)
 
+	# Test sign aggregation
+	test_result += aggregation_expect(["+", "1"], [("+1", [])], verbose)
+	test_result += aggregation_expect(["-", "1"], [("-1", [])], verbose)
+	test_result += aggregation_expect(["-", "(", "1", ")"], ["(", ("-1", []), "*", "(", ("1", []), ")", ")"], verbose)
+	test_result += aggregation_expect(["1", "^", "-", "(", "1", ")"], [("1", []), "^", "(", ("-1", []), "*", "(", ("1", []), ")", ")"], verbose)
+	test_result += aggregation_expect(
+		["-", "(", "-", "(", "1", ")", ")"],
+		["(", ("-1", []), "*", "(", "(", ("-1", []), "*", "(", ("1", []), ")", ")", ")", ")"],
+	verbose)
+
 	# Test aggregating exponents
 	test_result += aggregation_expect(
 		["1", "cm", "^", "2"],
@@ -72,7 +83,7 @@ def test_aggregation(verbose = False):
 	verbose)
 	test_result += aggregation_expect(
 		["1", "cm", "^", "-", "2"],
-		None,
+		[("1", ["cm", "^", "-2"])],
 	verbose)
 	test_result += aggregation_expect(
 		["1", "cm", "^", "(", "2", ")"],
@@ -80,7 +91,7 @@ def test_aggregation(verbose = False):
 	verbose)
 	test_result += aggregation_expect(
 		["1", "cm", "^", "(", "-", "2", ")"],
-		None,
+		[("1", ["cm", "^", "(", "-2", ")"])],
 	verbose)
 	test_result += aggregation_expect(
 		["1", "cm", "^", "(", "2", "+", "1", ")"],
@@ -110,16 +121,24 @@ def test_aggregation(verbose = False):
 	# Test values/units with no immediately adjacent units/values
 	test_result += aggregation_expect(
 		["(", ")"],
-		["(", ")"],
+		None,
+	verbose)
+	test_result += aggregation_expect(
+		["(", "1", ")", "cm"],
+		["(", ("1", []), ")", "*", ("1", ["cm"])],
 	verbose)
 	test_result += aggregation_expect(
 		["1", "(", "cm", ")"],
-		[("1", []), "(", ("1", ["cm"]), ")"],
+		[("1", []), "*", "(", ("1", ["cm"]), ")"],
 	verbose)
 	test_result += aggregation_expect(
 		["1", "*", "cm"],
 		[("1", []), "*", ("1", ["cm"])],
 	verbose)
+
+	# Test expressions with invalid operators
+	test_result += aggregation_expect(["*", "1", "cm"], None, verbose)
+	test_result += aggregation_expect(["1", "cm", "*"], None, verbose)
 
 	return test_result
 
@@ -216,16 +235,14 @@ def test_parser(verbose = False):
 
 	# Test multi-unit expressions
 	# FIXME: Test using AST equality instead
-	test_result += parseExpr_expect(["+1"], "1.0", verbose)
-	test_result += parseExpr_expect(["1", "cm"], "1.0 cm", verbose)
-	test_result += parseExpr_expect(["1", "cm", "=", "1", "m"], "1.0 cm = 1.0 m", verbose)
-	test_result += parseExpr_expect(["1", "cm", "+", "1", "m"], "(1.0 cm + 1.0 m)", verbose)
-	test_result += parseExpr_expect(["1", "cm", "-", "1", "m"], "(1.0 cm - 1.0 m)", verbose)
-	test_result += parseExpr_expect(["1", "cm", "*", "1", "m"], "(1.0 cm * 1.0 m)", verbose)
-	test_result += parseExpr_expect(["1", "cm", "/", "1", "m"], "(1.0 cm / 1.0 m)", verbose)
-	test_result += parseExpr_expect(["1", "cm", "^", "1", "cm"], "1.0 cm^(2)", verbose)
-	test_result += parseExpr_expect(["1", "cm", "^", "1", "m"], "1.0 m cm", verbose)
-	test_result += parseExpr_expect(["1", "cm", "^", "(", "1", "cm", ")"], None, verbose)
+	test_result += parseExpr_expect([("+1", [])], "1.0", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", ["m"]), ":"], "1.0 cm : 1.0 m", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", ["m"]), "+"], "(1.0 cm + 1.0 m)", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", ["m"]), "-"], "(1.0 cm - 1.0 m)", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", ["m"]), "*"], "(1.0 cm * 1.0 m)", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", ["m"]), "/"], "(1.0 cm / 1.0 m)", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", []), "^"], "((1.0 cm)^(1.0))", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", ["cm"]), "^"], "((1.0 cm)^(1.0 cm))", verbose)
 
 	return test_result
 

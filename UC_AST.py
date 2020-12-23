@@ -1,3 +1,5 @@
+import UC_Common
+
 class AST_Add:
 	def __init__(self, left, right):
 		self.left = left
@@ -48,7 +50,7 @@ class AST_Exp:
 		self.right = right
 	
 	def __str__(self):
-		return f"({str(self.left)})^({str(self.right)})"
+		return f"(({str(self.left)})^({str(self.right)}))"
 
 	def evaluate(self):
 		return self.left.evaluate() ** self.right.evaluate()
@@ -59,7 +61,7 @@ class AST_Eql:
 		self.right = right
 	
 	def __str__(self):
-		return f"Convert {str(self.left)} to {str(self.right)}"
+		return f"{str(self.left)} : {str(self.right)}"
 
 	def evaluate(self):
 		raise UC_Common.UnitError("Not implemented!")
