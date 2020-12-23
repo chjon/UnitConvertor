@@ -343,10 +343,10 @@ def parseUnit(tokens):
 			if not isinstance(a, dict): a = {a: 1}
 			b = stack.pop()
 			if not isinstance(b, dict): b = {b: 1}
-			for sym, exp in b.items():
-				if sym not in a: a[sym] = 0
-				a[sym] -= exp
-			stack.append(a)
+			for sym, exp in a.items():
+				if sym not in b: b[sym] = 0
+				b[sym] -= exp
+			stack.append(b)
 		elif token == OPERATOR_EXP:
 			a = stack.pop()
 			b = stack.pop()
