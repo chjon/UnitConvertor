@@ -167,22 +167,34 @@ def convertToRPN(tokens):
 
 	return outputQueue
 
-def replaceNegation(tokens):
+def aggregateSign(tokens, updatedTokens = []):
 	"""
 	Replace the negation operator '-' with a multiplication by -1
 	@param tokens: a list of tokens
 	"""
+	def aggregateSignHelper(tokens, updatedTokens):
+		while tokens:
+			token = tokens.pop(0)
+			if token == BRACKET_OPEN:
+				updatedTokens.append(token)
+				aggregateSignHelper(tokens, updatedTokens)
+			elif token == BRACKET_SHUT:
+				updatedTokens.append(token)
+				return updatedTokens
+			elif ((token == OPERATOR_ADD or token == OPERATOR_SUB) and
+				(not updatedTokens or isSpecialChar(updatedTokens[-1]))
+			):
+				if tokens and UC_Utils.isFloat(tokens[0]):
+					updatedTokens.append(f"{token}{tokens.pop(0)}")
+				else:
+					updatedTokens.extend([BRACKET_OPEN, f"{token}1", OPERATOR_MUL])
+					aggregateSignHelper(tokens, updatedTokens)
+					updatedTokens.append(BRACKET_SHUT)
+			else: updatedTokens.append(token)
+	
 	updatedTokens = []
-	while tokens:
-		token = tokens.pop(0)
-		if ((token == OPERATOR_ADD or token == OPERATOR_SUB) and
-			(not updatedTokens or isSpecialChar(updatedTokens[-1]))
-		):
-			if tokens and UC_Utils.isFloat(tokens[0]):
-				updatedTokens.append(f"{token}{tokens.pop(0)}")
-			else:
-				updatedTokens.extend([f"{token}1", OPERATOR_MUL])
-		else: updatedTokens.append(token)
+	aggregateSignHelper(tokens, updatedTokens)
+	if tokens: raise UC_Common.UnitError(f"Detected mismatched parentheses: '{BRACKET_SHUT}'")
 	return updatedTokens
 
 def aggregateUnits(tokens):
@@ -292,6 +304,12 @@ def aggregateQuantities(tokens):
 
 	return aggregatedTokens
 
+def aggregate(tokens):
+	tokens = aggregateSign(tokens)
+	tokens = aggregateUnits(tokens)
+	tokens = aggregateQuantities(tokens)
+	return tokens
+
 def parseUnit(tokens):
 	tokens = convertToRPN(tokens)
 
@@ -352,9 +370,7 @@ def parseUnit(tokens):
 
 def parseExpr(string):
 	tokens = tokenize(string)
-	tokens = replaceNegation(tokens)
-	tokens = aggregateUnits(tokens)
-	tokens = aggregateQuantities(tokens)
+	tokens = aggregate(tokens)
 	tokens = convertToRPN(tokens)
 
 	stack = []
