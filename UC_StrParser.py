@@ -194,88 +194,67 @@ def aggregateUnits(tokens):
 	unitTokens = []
 	parsingExp = 0
 
+	def appendUnitTokens(aggregatedTokens, unitTokens, token = None):
+		# Append unit tokens to list of aggregated tokens
+		if unitTokens:
+			if unitTokens[-1] == OPERATOR_MUL or unitTokens[-1] == OPERATOR_DIV:
+				operator = unitTokens.pop()
+				aggregatedTokens.append(unitTokens)
+				aggregatedTokens.append(operator)
+			else: aggregatedTokens.append(unitTokens)
+		if token is not None: aggregatedTokens.append(token)
+		return []
+	
+	def handleParseExpDecrement(tokens, unitTokens, parsingExp):
+		# Check if multiplication needs to be injected between adjacent units
+		if parsingExp != 1: return parsingExp
+		if tokens:
+			if isOperator(tokens[0]):
+				unitTokens.append(tokens.pop(0))
+			elif UC_Utils.isValidSymbol(tokens[0]):
+				unitTokens.append(OPERATOR_MUL)
+		return 0
+	
+	def handleAppendUnitSymbol(tokens, unitTokens, parsingExp):
+		if tokens:
+			operator = tokens[0]
+			if operator == OPERATOR_EXP:
+				unitTokens.append(tokens.pop(0))
+				return True
+			elif operator == OPERATOR_MUL or operator == OPERATOR_DIV:
+				unitTokens.append(tokens.pop(0))
+			elif UC_Utils.isValidSymbol(operator):
+				unitTokens.append(OPERATOR_MUL)
+		return parsingExp
+
 	while tokens:
 		token = UC_Utils.getNextToken(tokens)
 		if token == BRACKET_OPEN:
 			if parsingExp:
-				parsingExp += 1
 				unitTokens.append(token)
-			else:
-				if unitTokens:
-					if unitTokens[-1] == OPERATOR_MUL or unitTokens[-1] == OPERATOR_DIV:
-						operator = unitTokens.pop()
-						aggregatedTokens.append(unitTokens)
-						aggregatedTokens.append(operator)
-					else: aggregatedTokens.append(unitTokens)
-				unitTokens = []
-				aggregatedTokens.append(token)
+				parsingExp += 1
+			else: unitTokens = appendUnitTokens(aggregatedTokens, unitTokens, token)
 		elif token == BRACKET_SHUT:
 			if parsingExp:
-				parsingExp -= 1
 				unitTokens.append(token)
-				if parsingExp == 1:
-					parsingExp = 0
-					if tokens:
-						if isOperator(tokens[0]):
-							unitTokens.append(tokens.pop(0))
-						elif UC_Utils.isValidSymbol(tokens[0]):
-							unitTokens.append(OPERATOR_MUL)
-			else:
-				if unitTokens:
-					if unitTokens[-1] == OPERATOR_MUL or unitTokens[-1] == OPERATOR_DIV:
-						operator = unitTokens.pop()
-						aggregatedTokens.append(unitTokens)
-						aggregatedTokens.append(operator)
-					else: aggregatedTokens.append(unitTokens)
-				unitTokens = []
-				aggregatedTokens.append(token)
+				parsingExp = handleParseExpDecrement(tokens, unitTokens, parsingExp - 1)
+			else: unitTokens = appendUnitTokens(aggregatedTokens, unitTokens, token)
 		elif UC_Utils.isFloat(token):
 			if parsingExp:
 				if not UC_Utils.isInt(token): raise UC_Common.UnitError(f"Expected int; received '{token}'")
 				unitTokens.append(token)
-				if parsingExp == 1:
-					parsingExp = 0
-					if tokens:
-						if isOperator(tokens[0]):
-							unitTokens.append(tokens.pop(0))
-						elif UC_Utils.isValidSymbol(tokens[0]):
-							unitTokens.append(OPERATOR_MUL)
-			else:
-				if unitTokens:
-					if unitTokens[-1] == OPERATOR_MUL or unitTokens[-1] == OPERATOR_DIV:
-						operator = unitTokens.pop()
-						aggregatedTokens.append(unitTokens)
-						aggregatedTokens.append(operator)
-					else: aggregatedTokens.append(unitTokens)
-				unitTokens = []
-				aggregatedTokens.append(token)
+				parsingExp = handleParseExpDecrement(tokens, unitTokens, parsingExp)
+			else: unitTokens = appendUnitTokens(aggregatedTokens, unitTokens, token)
 		elif UC_Utils.isValidSymbol(token):
 			if parsingExp: raise UC_Common.UnitError(f"Expected int; received '{token}'")
 			unitTokens.append(token)
-			if tokens:
-				operator = tokens[0]
-				if operator == OPERATOR_EXP:
-					unitTokens.append(tokens.pop(0))
-					parsingExp = True
-				elif operator == OPERATOR_MUL or operator == OPERATOR_DIV:
-					unitTokens.append(tokens.pop(0))
-				elif UC_Utils.isValidSymbol(operator):
-					unitTokens.append(OPERATOR_MUL)
+			parsingExp = handleAppendUnitSymbol(tokens, unitTokens, parsingExp)
 		elif isOperator(token):
 			if parsingExp: raise UC_Common.UnitError(f"Expected int; received '{token}'")
-			else:
-				if unitTokens:
-					if unitTokens[-1] == OPERATOR_MUL or unitTokens[-1] == OPERATOR_DIV:
-						operator = unitTokens.pop()
-						aggregatedTokens.append(unitTokens)
-						aggregatedTokens.append(operator)
-					else: aggregatedTokens.append(unitTokens)
-				unitTokens = []
-				aggregatedTokens.append(token)
-		else:
-			raise UC_Common.UnitError(f"Unknown token; received '{token}'")
+			else: unitTokens = appendUnitTokens(aggregatedTokens, unitTokens, token)
+		else: raise UC_Common.UnitError(f"Unknown token; received '{token}'")
 
-	if unitTokens: aggregatedTokens.append(unitTokens)
+	appendUnitTokens(aggregatedTokens, unitTokens)
 	return aggregatedTokens
 
 def aggregateQuantities(tokens):
@@ -284,10 +263,11 @@ def aggregateQuantities(tokens):
 	@param tokens: a list of tokens
 	"""
 	aggregatedTokens = []
-	needsValue = False
+	needsValue = True
 
 	while tokens:
 		if isOperator(tokens[0]):
+			if needsValue: raise UC_Common.UnitError(f"Expected float; received '{tokens[0]}'")
 			aggregatedTokens.append(tokens.pop(0))
 			needsValue = True
 		elif isSpecialChar(tokens[0]):
@@ -308,7 +288,7 @@ def aggregateQuantities(tokens):
 				unit = tokens.pop(0)
 
 			aggregatedTokens.append((quantity, unit))
-	if needsValue: raise UC_Common.UnitError(f"Expected float; no tokens received")
+	if needsValue and aggregatedTokens: raise UC_Common.UnitError(f"Expected float; no tokens received")
 
 	return aggregatedTokens
 

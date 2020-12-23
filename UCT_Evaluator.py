@@ -110,7 +110,7 @@ def test_aggregation(verbose = False):
 	# Test values/units with no immediately adjacent units/values
 	test_result += aggregation_expect(
 		["(", ")"],
-		["(", ")"],
+		None,
 	verbose)
 	test_result += aggregation_expect(
 		["1", "(", "cm", ")"],
@@ -120,6 +120,10 @@ def test_aggregation(verbose = False):
 		["1", "*", "cm"],
 		[("1", []), "*", ("1", ["cm"])],
 	verbose)
+
+	# Test expressions with invalid operators
+	test_result += aggregation_expect(["*", "1", "cm"], None, verbose)
+	test_result += aggregation_expect(["1", "cm", "*"], None, verbose)
 
 	return test_result
 
@@ -218,7 +222,7 @@ def test_parser(verbose = False):
 	# FIXME: Test using AST equality instead
 	test_result += parseExpr_expect(["+1"], "1.0", verbose)
 	test_result += parseExpr_expect(["1", "cm"], "1.0 cm", verbose)
-	test_result += parseExpr_expect(["1", "cm", "=", "1", "m"], "1.0 cm = 1.0 m", verbose)
+	# test_result += parseExpr_expect(["1", "cm", "=", "1", "m"], "1.0 cm = 1.0 m", verbose)
 	test_result += parseExpr_expect(["1", "cm", "+", "1", "m"], "(1.0 cm + 1.0 m)", verbose)
 	test_result += parseExpr_expect(["1", "cm", "-", "1", "m"], "(1.0 cm - 1.0 m)", verbose)
 	test_result += parseExpr_expect(["1", "cm", "*", "1", "m"], "(1.0 cm * 1.0 m)", verbose)
