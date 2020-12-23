@@ -214,7 +214,13 @@ def aggregateUnits(tokens):
 				aggregatedTokens.append(unitTokens)
 				aggregatedTokens.append(operator)
 			else: aggregatedTokens.append(unitTokens)
-		if token is not None: aggregatedTokens.append(token)
+		if token is not None:
+			# Inject multiplication if needed
+			if ((aggregatedTokens) and
+				(not isSpecialChar(aggregatedTokens[-1])) and
+				(token == BRACKET_OPEN)
+			): aggregatedTokens.append(OPERATOR_MUL)
+			aggregatedTokens.append(token)
 		return []
 	
 	def handleParseExpDecrement(tokens, unitTokens, parsingExp):
@@ -292,7 +298,10 @@ def aggregateQuantities(tokens):
 			try:
 				float(tokens[0])
 				quantity = tokens.pop(0)
-			except: pass
+			except:
+				# Inject multiplication where needed
+				if aggregatedTokens and aggregatedTokens[-1] == BRACKET_SHUT:
+					aggregatedTokens.append(OPERATOR_MUL)
 
 			# Get unit
 			unit = []
@@ -368,11 +377,7 @@ def parseUnit(tokens):
 		else: raise UC_Common.UnitError("Invalid expression")
 	return units
 
-def parseExpr(string):
-	tokens = tokenize(string)
-	tokens = aggregate(tokens)
-	tokens = convertToRPN(tokens)
-
+def parseExpr(tokens):
 	stack = []
 	for token in tokens:
 		if token == OPERATOR_ADD:
@@ -408,3 +413,9 @@ def parseExpr(string):
 	if not stack: return ""
 	if len(stack) != 1: raise UC_Common.UnitError("Invalid expression")
 	return stack[0]
+
+def parse(string):
+	tokens = tokenize(string)
+	tokens = aggregate(tokens)
+	tokens = convertToRPN(tokens)
+	return parseExpr(tokens)

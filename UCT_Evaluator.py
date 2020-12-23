@@ -124,8 +124,12 @@ def test_aggregation(verbose = False):
 		None,
 	verbose)
 	test_result += aggregation_expect(
+		["(", "1", ")", "cm"],
+		["(", ("1", []), ")", "*", ("1", ["cm"])],
+	verbose)
+	test_result += aggregation_expect(
 		["1", "(", "cm", ")"],
-		[("1", []), "(", ("1", ["cm"]), ")"],
+		[("1", []), "*", "(", ("1", ["cm"]), ")"],
 	verbose)
 	test_result += aggregation_expect(
 		["1", "*", "cm"],
@@ -231,16 +235,14 @@ def test_parser(verbose = False):
 
 	# Test multi-unit expressions
 	# FIXME: Test using AST equality instead
-	test_result += parseExpr_expect(["+1"], "1.0", verbose)
-	test_result += parseExpr_expect(["1", "cm"], "1.0 cm", verbose)
-	# test_result += parseExpr_expect(["1", "cm", "=", "1", "m"], "1.0 cm = 1.0 m", verbose)
-	test_result += parseExpr_expect(["1", "cm", "+", "1", "m"], "(1.0 cm + 1.0 m)", verbose)
-	test_result += parseExpr_expect(["1", "cm", "-", "1", "m"], "(1.0 cm - 1.0 m)", verbose)
-	test_result += parseExpr_expect(["1", "cm", "*", "1", "m"], "(1.0 cm * 1.0 m)", verbose)
-	test_result += parseExpr_expect(["1", "cm", "/", "1", "m"], "(1.0 cm / 1.0 m)", verbose)
-	test_result += parseExpr_expect(["1", "cm", "^", "1", "cm"], "1.0 cm^(2)", verbose)
-	test_result += parseExpr_expect(["1", "cm", "^", "1", "m"], "1.0 m cm", verbose)
-	test_result += parseExpr_expect(["1", "cm", "^", "(", "1", "cm", ")"], None, verbose)
+	test_result += parseExpr_expect([("+1", [])], "1.0", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", ["m"]), ":"], "1.0 cm : 1.0 m", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", ["m"]), "+"], "(1.0 cm + 1.0 m)", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", ["m"]), "-"], "(1.0 cm - 1.0 m)", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", ["m"]), "*"], "(1.0 cm * 1.0 m)", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", ["m"]), "/"], "(1.0 cm / 1.0 m)", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", []), "^"], "((1.0 cm)^(1.0))", verbose)
+	test_result += parseExpr_expect([("1", ["cm"]), ("1", ["cm"]), "^"], "((1.0 cm)^(1.0 cm))", verbose)
 
 	return test_result
 
