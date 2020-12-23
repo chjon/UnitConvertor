@@ -1,5 +1,6 @@
 import UC_Common
 import UC_Utils
+import UC_Unit
 
 OPERATOR_EXP = '^'
 OPERATOR_MUL = '*'
@@ -12,14 +13,14 @@ BRACKET_SHUT = ')'
 
 # Map of operator to precedence and associativity
 # A larger precedence value means that the operator is higher precedence
-# An associativity of 1 means that the operator is right associative
+# An associativity of 1 means that the operator is left associative
 operatorPrecedences = {
-	OPERATOR_EXP: (3, 1),
-	OPERATOR_MUL: (2, 0),
-	OPERATOR_DIV: (2, 0),
-	OPERATOR_ADD: (1, 0),
-	OPERATOR_SUB: (1, 0),
-	OPERATOR_EQL: (0, 0),
+	OPERATOR_EXP: (3, 0),
+	OPERATOR_MUL: (2, 1),
+	OPERATOR_DIV: (2, 1),
+	OPERATOR_ADD: (1, 1),
+	OPERATOR_SUB: (1, 1),
+	OPERATOR_EQL: (0, 1),
 }
 
 def isOperator(char):
@@ -165,6 +166,21 @@ def convertToRPN(tokens):
 
 	return outputQueue
 
+def replaceNegation(tokens):
+	"""
+	Replace the negation operator '-' with a multiplication by -1
+	@param tokens: a list of tokens
+	"""
+	updatedTokens = []
+	while tokens:
+		token = tokens.pop(0)
+		if ((token == OPERATOR_ADD or token == OPERATOR_SUB) and
+			(updatedTokens) and
+			(isOperator(updatedTokens[-1]))
+		): updatedTokens.extend([OPERATOR_MUL, f"{token}1"])
+		else: updatedTokens.append(token)
+	return updatedTokens
+
 def aggregateUnits(tokens):
 	"""
 	Combine tokens which constitute compound units
@@ -195,7 +211,11 @@ def aggregateUnits(tokens):
 				unitTokens.append(token)
 				if parsingExp == 1:
 					parsingExp = 0
-					if tokens and isOperator(tokens[0]): unitTokens.append(tokens.pop(0))
+					if tokens:
+						if isOperator(tokens[0]):
+							unitTokens.append(tokens.pop(0))
+						elif UC_Utils.isValidSymbol(tokens[0]):
+							unitTokens.append(OPERATOR_MUL)
 			else:
 				if unitTokens:
 					if isOperator(unitTokens[-1]):
@@ -211,7 +231,11 @@ def aggregateUnits(tokens):
 				unitTokens.append(token)
 				if parsingExp == 1:
 					parsingExp = 0
-					if tokens and isOperator(tokens[0]): unitTokens.append(tokens.pop(0))
+					if tokens:
+						if isOperator(tokens[0]):
+							unitTokens.append(tokens.pop(0))
+						elif UC_Utils.isValidSymbol(tokens[0]):
+							unitTokens.append(OPERATOR_MUL)
 			else:
 				if unitTokens:
 					if isOperator(unitTokens[-1]):
@@ -231,6 +255,8 @@ def aggregateUnits(tokens):
 					parsingExp = True
 				elif isOperator(operator):
 					unitTokens.append(tokens.pop(0))
+				elif UC_Utils.isValidSymbol(operator):
+					unitTokens.append(OPERATOR_MUL)
 		elif isOperator(token):
 			if parsingExp: unitTokens.append(token)
 			else:
@@ -282,14 +308,90 @@ def aggregateQuantities(tokens):
 
 	return aggregatedTokens
 
-def aggregate(tokens):
-	aggregatedTokens = aggregateUnits(tokens)
-	aggregatedTokens = aggregateQuantities(aggregatedTokens)
-	return aggregatedTokens
+def parseUnit(tokens):
+	tokens = convertToRPN(tokens)
 
-# TODO: Implement this!
+	stack = []
+	for token in tokens:
+		if token == OPERATOR_ADD:
+			a = stack.pop()
+			if not isinstance(a, int): raise UC_Common.UnitError(f"Expected int; received '{a}'")
+			b = stack.pop()
+			if not isinstance(b, int): raise UC_Common.UnitError(f"Expected int; received '{b}'")
+			stack.append(b + a)
+		elif token == OPERATOR_SUB:
+			a = stack.pop()
+			if not isinstance(a, int): raise UC_Common.UnitError(f"Expected int; received '{a}'")
+			b = stack.pop()
+			if not isinstance(b, int): raise UC_Common.UnitError(f"Expected int; received '{b}'")
+			stack.append(b - a)
+		elif token == OPERATOR_MUL:
+			a = stack.pop()
+			if not isinstance(a, dict): a = {a: 1}
+			b = stack.pop()
+			if not isinstance(b, dict): b = {b: 1}
+			for sym, exp in b.items():
+				if sym not in a: a[sym] = 0
+				a[sym] += exp
+			stack.append(a)
+		elif token == OPERATOR_DIV:
+			a = stack.pop()
+			if not isinstance(a, dict): a = {a: 1}
+			b = stack.pop()
+			if not isinstance(b, dict): b = {b: 1}
+			for sym, exp in b.items():
+				if sym not in a: a[sym] = 0
+				a[sym] -= exp
+			stack.append(a)
+		elif token == OPERATOR_EXP:
+			a = stack.pop()
+			b = stack.pop()
+			if not isinstance(a, int): raise UC_Common.UnitError(f"Expected int; received '{a}'")
+			stack.append({b: a})
+		else:
+			if UC_Utils.isInt(token): stack.append(int(token))
+			else: stack.append(token)
+
+	# Aggregate into a single map
+	units = {}
+	while stack:
+		top = stack.pop()
+		if isinstance(top, dict):
+			for sym, exp in top.items():
+				if sym not in units: units[sym] = 0
+				units[sym] += exp
+		elif UC_Utils.isValidSymbol(top):
+			if top not in units: units[top] = 0
+			units[top] += 1
+		else: raise UC_Common.UnitError("Invalid expression")
+	return units
+
 def parseExpr(string):
 	tokens = tokenize(string)
-	tokens = aggregate(tokens)
-	rpnTokens = convertToRPN(tokens)
-	return rpnTokens
+	tokens = replaceNegation(tokens)
+	tokens = aggregateUnits(tokens)
+	tokens = aggregateQuantities(tokens)
+	tokens = convertToRPN(tokens)
+
+	stack = []
+	for token in tokens:
+		if token == OPERATOR_ADD:
+			stack.append(f"{stack.pop()} + {stack.pop()}")
+		if token == OPERATOR_SUB:
+			stack.append(f"{stack.pop()} - {stack.pop()}")
+		if token == OPERATOR_MUL:
+			stack.append(f"{stack.pop()} * {stack.pop()}")
+		if token == OPERATOR_DIV:
+			stack.append(f"{stack.pop()} / {stack.pop()}")
+		if token == OPERATOR_EXP:
+			stack.append(f"{stack.pop()} ^ {stack.pop()}")
+		else:
+			valStr, unitTokens = token
+			val = float(valStr)
+			unit = parseUnit(unitTokens)
+			stack.append((val, unit))
+
+	if not stack: return ""
+	if len(stack) != 1: raise UC_Common.UnitError("Invalid expression")
+
+	return tokens

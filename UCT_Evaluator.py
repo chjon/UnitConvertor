@@ -34,6 +34,7 @@ def test_tokenization(verbose = False):
 	test_result += tokenization_expect("", [], verbose)
 	test_result += tokenization_expect("    ", [], verbose)
 	test_result += tokenization_expect("a", ["a"], verbose)
+	test_result += tokenization_expect("a2", ["a", "2"], verbose)
 	test_result += tokenization_expect("  a  ", ["a"], verbose)
 	test_result += tokenization_expect("a^2", ["a", "^", "2"], verbose)
 	test_result += tokenization_expect("a*(b+c)^2 cm = m", ["a", "*", "(", "b", "+", "c", ")", "^", "2", "cm", "=", "m"], verbose)
@@ -43,11 +44,13 @@ def test_tokenization(verbose = False):
 def aggregation_expect(tokens, expected, verbose):
 	if expected == None:
 		try:
-			tokens = UC_StrParser.aggregate(tokens)
+			tokens = UC_StrParser.aggregateUnits(tokens)
+			tokens = UC_StrParser.aggregateQuantities(tokens)
 			return test_fail(f"Received {tokens}; expected error", verbose)
 		except: return 0
 	else:
-		tokens = UC_StrParser.aggregate(tokens)
+		tokens = UC_StrParser.aggregateUnits(tokens)
+		tokens = UC_StrParser.aggregateQuantities(tokens)
 		if tokens != expected: return test_fail(f"Received {tokens}; expected {expected}", verbose)
 		return 0
 
@@ -58,7 +61,7 @@ def test_aggregation(verbose = False):
 	test_result += aggregation_expect([], [], verbose)
 	test_result += aggregation_expect(["1"], [("1", [])], verbose)
 	test_result += aggregation_expect(["1", "cm"], [("1", ["cm"])], verbose)
-	test_result += aggregation_expect(["1", "cm", "m"], [("1", ["cm", "m"])], verbose)
+	test_result += aggregation_expect(["1", "cm", "m"], [("1", ["cm", "*", "m"])], verbose)
 	test_result += aggregation_expect(["1", "cm", "*", "m"], [("1", ["cm", "*", "m"])], verbose)
 	test_result += aggregation_expect(["(", "1", "cm", ")"], ["(", ("1", ["cm"]), ")"], verbose)
 
@@ -89,7 +92,7 @@ def test_aggregation(verbose = False):
 	verbose)
 	test_result += aggregation_expect(
 		["1", "cm", "^", "2", "m"],
-		[("1", ["cm", "^", "2", "m"])],
+		[("1", ["cm", "^", "2", "*", "m"])],
 	verbose)
 	test_result += aggregation_expect(
 		["1", "cm", "^", "2", "*", "m"],
@@ -120,15 +123,99 @@ def test_aggregation(verbose = False):
 
 	return test_result
 
+def rpn_conversion_expect(tokens, expected, verbose):
+	if expected == None:
+		try:
+			tokens = UC_StrParser.convertToRPN(tokens)
+			return test_fail(f"Received {tokens}; expected error", verbose)
+		except: return 0
+	else:
+		tokens = UC_StrParser.convertToRPN(tokens)
+		if tokens != expected: return test_fail(f"Received {tokens}; expected {expected}", verbose)
+		return 0
+
 def test_rpn_conversion(verbose = False):
 	test_result = 0
+
+	# Test associativity
+	test_result += rpn_conversion_expect([], [], verbose)
+	test_result += rpn_conversion_expect(["1", "+", "2", "+", "3"], ["1", "2", "+", "3", "+"], verbose)
+	test_result += rpn_conversion_expect(["1", "-", "2", "-", "3"], ["1", "2", "-", "3", "-"], verbose)
+	test_result += rpn_conversion_expect(["1", "*", "2", "*", "3"], ["1", "2", "*", "3", "*"], verbose)
+	test_result += rpn_conversion_expect(["1", "/", "2", "/", "3"], ["1", "2", "/", "3", "/"], verbose)
+	test_result += rpn_conversion_expect(["1", "^", "2", "^", "3"], ["1", "2", "3", "^", "^"], verbose)
+
+	# Test precedence
+	test_result += rpn_conversion_expect(["1", "-", "2", "+", "3"], ["1", "2", "-", "3", "+"], verbose)
+	test_result += rpn_conversion_expect(["1", "+", "2", "-", "3"], ["1", "2", "+", "3", "-"], verbose)
+	test_result += rpn_conversion_expect(["1", "/", "2", "*", "3"], ["1", "2", "/", "3", "*"], verbose)
+	test_result += rpn_conversion_expect(["1", "*", "2", "/", "3"], ["1", "2", "*", "3", "/"], verbose)
+	test_result += rpn_conversion_expect(["1", "+", "2", "*", "3"], ["1", "2", "3", "*", "+"], verbose)
+	test_result += rpn_conversion_expect(["1", "*", "2", "+", "3"], ["1", "2", "*", "3", "+"], verbose)
+	test_result += rpn_conversion_expect(["1", "-", "2", "/", "3"], ["1", "2", "3", "/", "-"], verbose)
+	test_result += rpn_conversion_expect(["1", "/", "2", "-", "3"], ["1", "2", "/", "3", "-"], verbose)
+	test_result += rpn_conversion_expect(["1", "^", "2", "*", "3"], ["1", "2", "^", "3", "*"], verbose)
+	test_result += rpn_conversion_expect(["1", "*", "2", "^", "3"], ["1", "2", "3", "^", "*"], verbose)
+
+	# Test brackets
+	test_result += rpn_conversion_expect(["(",")"], [], verbose)
+	test_result += rpn_conversion_expect(["1", "^", "(", "2", "*", "3", ")"], ["1", "2", "3", "*", "^"], verbose)
+	test_result += rpn_conversion_expect(["1", "*", "(", "2", "+", "3", ")"], ["1", "2", "3", "+", "*"], verbose)
+	test_result += rpn_conversion_expect(["(", "1", "*", "2", "+", "3", ")"], ["1", "2", "*", "3", "+"], verbose)
+	test_result += rpn_conversion_expect(["(", "1", ")", "*", "2", "+", "3"], ["1", "2", "*", "3", "+"], verbose)
+	test_result += rpn_conversion_expect(["1", "*", "2", "+", "(", "3", ")"], ["1", "2", "*", "3", "+"], verbose)
+	test_result += rpn_conversion_expect(["(", "(", "1", ")", "*", "(", "2", ")", ")"], ["1", "2", "*"], verbose)
+
+	# Test unbalanced brackets
+	test_result += rpn_conversion_expect(["("], None, verbose)
+	test_result += rpn_conversion_expect(["(", "1", "+", "2"], None, verbose)
+	test_result += rpn_conversion_expect(["1", "(", "+", "2"], None, verbose)
+	test_result += rpn_conversion_expect(["1", "+", "(", "2"], None, verbose)
+	test_result += rpn_conversion_expect(["1", "+", "2", "("], None, verbose)
+	test_result += rpn_conversion_expect([")"], None, verbose)
+	test_result += rpn_conversion_expect([")", "1", "+", "2"], None, verbose)
+	test_result += rpn_conversion_expect(["1", ")", "+", "2"], None, verbose)
+	test_result += rpn_conversion_expect(["1", "+", ")", "2"], None, verbose)
+	test_result += rpn_conversion_expect(["1", "+", "2", ")"], None, verbose)
+
 	return test_result
+
+def parseUnit_expect(tokens, expected, verbose):
+	if expected == None:
+		try:
+			result = UC_StrParser.parseUnit(tokens)
+			return test_fail(f"Received '{result}'; expected error", verbose)
+		except: return 0
+	else:
+		result = UC_StrParser.parseUnit(tokens)
+		if result != expected: return test_fail(f"Received '{result}'; expected '{expected}'", verbose)
+		return 0
+
+def parseExpr_expect(string, expected, verbose):
+	if expected == None:
+		try:
+			result = UC_StrParser.parseExpr(string)
+			return test_fail(f"Received '{result}'; expected error", verbose)
+		except: return 0
+	else:
+		result = UC_StrParser.parseExpr(string)
+		if result != expected: return test_fail(f"Received '{result}'; expected '{expected}'", verbose)
+		return 0
 
 def test_parser(verbose = False):
 	test_result = 0
 
-	tokens = UC_StrParser.parseExpr("15 cm^2 / m^2 + 18")
-	print(tokens)
+	# Test exponents
+	test_result += parseUnit_expect([], {}, verbose)
+	test_result += parseUnit_expect(["cm"], {"cm": 1}, verbose)
+	test_result += parseUnit_expect(["cm", "^", "1"], {"cm": 1}, verbose)
+	test_result += parseUnit_expect(["cm", "^", "(", "1", "+", "1", ")"], {"cm": 2}, verbose)
+	test_result += parseUnit_expect(["cm", "^", "(", "+1", ")"], {"cm": 1}, verbose)
+	test_result += parseUnit_expect(["cm", "^", "(", "1", "+", "cm", ")"], None, verbose)
+	test_result += parseUnit_expect(["cm", "^", "cm"], None, verbose)
+
+	# Test multi-unit expressions
+	test_result += parseExpr_expect(["1", "cm", "+", "1", "cm"], None, verbose)
 
 	return test_result
 

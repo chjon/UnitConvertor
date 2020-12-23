@@ -43,6 +43,7 @@ class Unit:
 		return outStr.strip()
 
 	def __eq__(self, other):
+		if other is None: return False
 		if self.sym == other.sym: return True
 		selfUnits = self.reduce()
 		otherUnits = other.reduce()
@@ -105,6 +106,7 @@ class Quantity:
 		return f'{self.value} {str(self.unit)}'
 
 	def __eq__(self, other):
+		if other is None: return False
 		return self.value == other.value and self.unit == other.unit
 
 	def __ne__(self, other):
