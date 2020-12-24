@@ -177,7 +177,7 @@ def aggregateUnits(tokens):
 		# Check if multiplication needs to be injected between adjacent units
 		if parsingExp != 1: return parsingExp
 		if tokens:
-			if isOperator(tokens[0]):
+			if tokens[0] == OPERATOR_MUL or tokens[0] == OPERATOR_DIV:
 				unitTokens.append(tokens.pop(0))
 			elif isValidSymbol(tokens[0]):
 				unitTokens.append(OPERATOR_MUL)
@@ -185,13 +185,13 @@ def aggregateUnits(tokens):
 	
 	def handleAppendUnitSymbol(tokens, unitTokens, parsingExp):
 		if tokens:
-			operator = tokens[0]
-			if operator == OPERATOR_EXP:
+			token = tokens[0]
+			if token == OPERATOR_EXP:
 				unitTokens.append(tokens.pop(0))
-				return True
-			elif operator == OPERATOR_MUL or operator == OPERATOR_DIV:
+				return 1
+			elif token == OPERATOR_MUL or token == OPERATOR_DIV:
 				unitTokens.append(tokens.pop(0))
-			elif isValidSymbol(operator):
+			elif isValidSymbol(token):
 				unitTokens.append(OPERATOR_MUL)
 		return parsingExp
 
