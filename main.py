@@ -61,7 +61,7 @@ commands = {
 }
 
 def main():
-	command_load(["load","standard.csv"])
+	command_load(["load",DEFAULT_FILE])
 	print(f"Type '{COMMAND_HELP}' for a list of commands")
 	for line in fileinput.input():
 		line = line.strip()
