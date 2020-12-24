@@ -23,7 +23,7 @@ def parseBaseUnitMap(tokens):
 	UC_Utils.getNextToken(tokens, UC_Common.END_DELIMITER)
 	return baseUnitMap
 
-def parseUnit(units, conversions, tokens):
+def parseUnit(units, conversions, tokens, overwrite):
 	"""
 	Convert the next series of tokens into a unit
 	@param units: a map of unit symbols to unit objects to be modified
@@ -34,7 +34,8 @@ def parseUnit(units, conversions, tokens):
 
 	# Handle base unit
 	sym = UC_Utils.parseSymbol(tokens)
-	if sym in units: raise UC_Common.FileFormatError(f"Duplicate definition of unit '{sym}'")
+	if not overwrite and (sym in units):
+		raise UC_Common.FileFormatError(f"Duplicate definition of unit '{sym}'")
 
 	# Handle derived unit
 	nextToken = UC_Utils.getNextToken(tokens)
@@ -50,7 +51,7 @@ def parseUnit(units, conversions, tokens):
 	# Create unit
 	units[sym] = UC_Unit.Unit(sym, baseUnitMap)
 
-def parsePrefixMapping(prefixes, tokens, base):
+def parsePrefixMapping(prefixes, tokens, base, overwrite):
 	"""
 	Convert the next series of tokens into a prefix-exponent pair
 	@param prefixes: the prefix-exponent map to modify
@@ -58,10 +59,11 @@ def parsePrefixMapping(prefixes, tokens, base):
 	@param base: the base for the exponent
 	"""
 	prefix = UC_Utils.getNextToken(tokens)
-	if prefix in prefixes: raise UC_Common.FileFormatError(f"Duplicate definition of prefix '{prefix}'")
+	if not overwrite and (prefix in prefixes):
+		raise UC_Common.FileFormatError(f"Duplicate definition of prefix '{prefix}'")
 	prefixes[prefix] = (base, UC_Utils.parseInt(tokens))
 
-def parsePrefix(prefixes, tokens):
+def parsePrefix(prefixes, tokens, overwrite):
 	"""
 	Convert the next series of tokens into prefix-exponent pairs
 	@param prefixes: the prefix-exponent map to modify
@@ -70,14 +72,14 @@ def parsePrefix(prefixes, tokens):
 	base = UC_Utils.parseFloat(tokens)
 	UC_Utils.getNextToken(tokens, UC_Common.MAP_DELIMITER)
 
-	parsePrefixMapping(prefixes, tokens, base)
+	parsePrefixMapping(prefixes, tokens, base, overwrite)
 	while UC_Utils.peekNextToken(tokens) == UC_Common.SEP_DELIMITER:
 		UC_Utils.getNextToken(tokens)
-		parsePrefixMapping(prefixes, tokens, base)	
+		parsePrefixMapping(prefixes, tokens, base, overwrite)	
 	UC_Utils.getNextToken(tokens, UC_Common.END_DELIMITER)
 
 # Recursive descent parsing
-def parseFile(tokens, units, conversions, prefixes):
+def parseFile(tokens, units, conversions, prefixes, overwrite):
 	"""
 	Convert a list of tokens into maps of units, conversions, and prefixes
 	@param tokens: a list of tokens
@@ -86,8 +88,8 @@ def parseFile(tokens, units, conversions, prefixes):
 	@param prefixes: a map of prefixes to exponents
 	"""
 	while len(tokens):
-		if UC_Utils.isValidSymbol(tokens[0]): parseUnit(units, conversions, tokens)
-		else: parsePrefix(prefixes, tokens)
+		if UC_Utils.isValidSymbol(tokens[0]): parseUnit(units, conversions, tokens, overwrite)
+		else: parsePrefix(prefixes, tokens, overwrite)
 
 	# Return result of parsing
 	return units, conversions, prefixes

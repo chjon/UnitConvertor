@@ -38,14 +38,23 @@ def command_help(args):
 	print("--------------------------")
 
 def command_load(args):
-	if len(args) != 2: print(f"Usage: {COMMAND_LOAD} <filename>")
+	validModes = {
+		"0": "Unload all currently-loaded definitions before loading file",
+		"1": "Load file and overwrite old definitions with new ones",
+		"2": "Load file but do not overwrite old definitions",
+	}
+
+	if len(args) != 3 or args[2] not in validModes:
+		print(f"Usage: {COMMAND_LOAD} <filename> <mode>")
+		print(f"Modes:")
+		for mode, helpString in validModes.items(): print(f"{INDENT}{mode}: {helpString}")
 	else:
 		try:
 			global convertor
-			units = convertor.units.copy()
-			conversions = convertor.conversions.copy()
-			prefixes = convertor.prefixes.copy()
-			UC_FileIO.loadFile(args[1], units, conversions, prefixes)
+			units       = {} if args[2] == "0" else convertor.units.copy()
+			conversions = {} if args[2] == "0" else convertor.conversions.copy()
+			prefixes    = {} if args[2] == "0" else convertor.prefixes.copy()
+			UC_FileIO.loadFile(args[1], units, conversions, prefixes, args[2] == "1")
 			convertor = UC_Convertor.Convertor(units, conversions, prefixes)
 			print(f"Successfully loaded definitions from '{args[1]}'")
 		except (OSError, UC_Common.UnitError, UC_Common.FileFormatError) as err:
@@ -75,7 +84,7 @@ commands = {
 }
 
 def main():
-	command_load([COMMAND_LOAD, DEFAULT_FILE])
+	command_load([COMMAND_LOAD, DEFAULT_FILE, "0"])
 	print(f"Type '{COMMAND_HELP}' for a list of commands")
 	for line in fileinput.input():
 		line = line.strip()

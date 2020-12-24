@@ -35,7 +35,7 @@ def tokenize(lines: list = []):
 
 	return tokens
 
-def loadFile(filename, units = {}, conversions = {}, prefixes = {}):
+def loadFile(filename, units, conversions, prefixes, overwrite):
 	"""
 	Read a file and generate maps of units, conversions, and prefixes
 	@param filename: the name of the file to load
@@ -49,7 +49,7 @@ def loadFile(filename, units = {}, conversions = {}, prefixes = {}):
 	file.close()
 
 	# Parse tokens to generate maps
-	UC_FileParser.parseFile(tokens, units, conversions, prefixes)
+	UC_FileParser.parseFile(tokens, units, conversions, prefixes, overwrite)
 
 	# Check that all dependencies exist and check for an acyclic dependency graph
 	UC_Utils.validate(units, conversions, prefixes)

@@ -8,8 +8,13 @@ This is a program for performing arithmetic operations while accounting for the 
 ## Commands
 * `exit`: Exit the program
 * `help`: Print help text
-* `load <filename>`: Unload current definitions and load definitions from file
+* `load <filename> <mode>`: Load additional definitions from file
+	* Modes:
+		* `0`: Unload all currently-loaded definitions before loading file
+		* `1`: Load file and overwrite old definitions with new ones
+		* `2`: Load file but do not overwrite old definitions
 * `save <filename>`: Save currently-loaded definitions to file
+* `unload`: Unload all currently-loaded definitions
 
 ## Expressions
 * `[0-9]`: Valid number inputs are integers and decimal values.
