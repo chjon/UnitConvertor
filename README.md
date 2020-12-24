@@ -1,6 +1,10 @@
 # UnitConvertor
 This is a program for performing arithmetic operations while accounting for the units associated with each quantity.
 
+## Running the program
+* `python3 main.py`: Run the main program
+* `python3 test.py`: Run the unit tests
+
 ## Commands
 * `exit`: Exit the program
 * `help`: Print help text
