@@ -77,17 +77,14 @@ def parsePrefix(prefixes, tokens):
 	UC_Utils.getNextToken(tokens, UC_Common.END_DELIMITER)
 
 # Recursive descent parsing
-def parseFile(tokens):
+def parseFile(tokens, units, conversions, prefixes):
 	"""
 	Convert a list of tokens into maps of units, conversions, and prefixes
 	@param tokens: a list of tokens
-	@return units: a map of unit symbols to unit objects
-	@return conversions: a map of derived unit symbols to scale factors
-	@return prefixes: a map of prefixes to exponents
+	@param units: a map of unit symbols to unit objects
+	@param conversions: a map of derived unit symbols to scale factors
+	@param prefixes: a map of prefixes to exponents
 	"""
-	units = {}
-	conversions = {}
-	prefixes = {}
 	while len(tokens):
 		if UC_Utils.isValidSymbol(tokens[0]): parseUnit(units, conversions, tokens)
 		else: parsePrefix(prefixes, tokens)

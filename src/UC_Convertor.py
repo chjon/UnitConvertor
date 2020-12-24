@@ -1,3 +1,4 @@
+from decimal import Decimal
 import src.UC_Unit as UC_Unit
 import src.UC_Common as UC_Common
 import src.UC_Utils as UC_Utils
@@ -19,7 +20,7 @@ class Convertor:
 		return (base)**(exp)
 
 	def processPrefixes(self, units):
-		scaleFactor = 1
+		scaleFactor = Decimal(1)
 		unitsToUpdate = {}
 		for prefixedSym, exp in units.items():
 			# Find prefix and base unit
