@@ -118,3 +118,30 @@ class Convertor:
 			raise UC_Common.UnitError(f"Invalid conversion: {str(srcUnit)} to {str(dstUnit)}")
 
 		return scaleFactor
+	
+	def addUnit(self, sym, scaleFactor, unit):
+		if sym in self.units:
+			quantity = self.conversions[sym] if sym in self.conversions else 1
+			raise UnitError(f"Unit '{sym}' already exists: {self.getUnitDefinitionStr(sym)}")
+		else:
+			units = self.units.copy()
+			units[sym] = UC_Unit.Unit(sym, unit.reduce())
+			conversions = self.conversions.copy()
+			conversions[sym] = scaleFactor
+			
+			# Check that all dependencies exist and check for an acyclic dependency graph
+			UC_Utils.validate(units, conversions, self.prefixes)
+			self.units = units
+			self.conversions = conversions
+	
+	def addPrefix(self, sym, base, exp):
+		if sym in self.prefixes:
+			base, exp = self.prefixes[sym]
+			raise UnitError(f"Prefix '{sym}' already exists: '{sym}' = {base}^{exp} = {base**exp}")
+		else:
+			prefixes = self.prefixes.copy()
+			prefixes[sym] = (base, exp)
+
+			# Check that all dependencies exist and check for an acyclic dependency graph
+			UC_Utils.validate(self.units, self.conversions, prefixes)
+			self.prefixes = prefixes

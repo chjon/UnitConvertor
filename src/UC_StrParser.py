@@ -362,7 +362,7 @@ def parseExpr(tokens):
 			baseUnits = UC_Unit.Unit(baseUnits = parseUnit(unitTokens)).reduce()
 			unit = UC_Unit.Unit(baseUnits = baseUnits)
 			stack.append(UC_Unit.Quantity(val, unit))
-	if not stack: return ""
+	if not stack: return UC_Unit.Quantity(1, UC_Unit.Unit())
 	if len(stack) != 1: raise UC_Common.UnitError("Invalid expression")
 	return stack[0]
 
