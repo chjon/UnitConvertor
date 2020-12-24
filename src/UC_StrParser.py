@@ -137,10 +137,11 @@ def aggregateSign(tokens, updatedTokens = []):
 			):
 				if tokens and UC_Utils.isFloat(tokens[0]):
 					updatedTokens.append(f"{token}{tokens.pop(0)}")
-				else:
+				elif not updatedTokens or updatedTokens[-1] != UC_Common.BRACKET_SHUT:
 					updatedTokens.extend([UC_Common.BRACKET_OPEN, f"{token}1", UC_Common.OPERATOR_MUL])
 					aggregateSignHelper(tokens, updatedTokens)
 					updatedTokens.append(UC_Common.BRACKET_SHUT)
+				else: updatedTokens.append(token)
 			else: updatedTokens.append(token)
 	
 	updatedTokens = []

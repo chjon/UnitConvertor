@@ -144,6 +144,10 @@ def test_aggregation(verbose = False):
 		["1", "*", "cm"],
 		[("1", []), "*", ("1", ["cm"])],
 	verbose)
+	test_result += aggregation_expect(
+		["(", "1", ")", "+", "(", "2", ")"],
+		["(", ("1", []), ")", "+", "(", ("2", []), ")"],
+	verbose)
 
 	# Test expressions with invalid operators
 	test_result += aggregation_expect(["*", "1", "cm"], None, verbose)
@@ -193,6 +197,7 @@ def test_rpn_conversion(verbose = False):
 	test_result += rpn_conversion_expect(["(", "1", ")", "*", "2", "+", "3"], ["1", "2", "*", "3", "+"], verbose)
 	test_result += rpn_conversion_expect(["1", "*", "2", "+", "(", "3", ")"], ["1", "2", "*", "3", "+"], verbose)
 	test_result += rpn_conversion_expect(["(", "(", "1", ")", "*", "(", "2", ")", ")"], ["1", "2", "*"], verbose)
+	test_result += rpn_conversion_expect(["(", "1", ")", "+", "(", "2", ")"], ["1", "2", "+"], verbose)
 
 	# Test unbalanced brackets
 	test_result += rpn_conversion_expect(["("], None, verbose)
