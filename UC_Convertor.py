@@ -2,6 +2,12 @@ from UC_Unit import *
 from UC_Common import *
 import UC_Utils
 
+def removeCancelledUnits(unitMap):
+	toRemove = []
+	for sym, exp in unitMap.items():
+		if exp == 0: toRemove.append(sym)
+	for sym in toRemove: unitMap.pop(sym)
+
 class Convertor:
 	def __init__(self, units = {}, conversions = {}, prefixes = {}):
 		self.units = units
@@ -46,7 +52,7 @@ class Convertor:
 			dstUnits[commonUnitSym] -= commonUnitExp
 			if srcUnits[commonUnitSym] == 0: srcUnits.pop(commonUnitSym)
 			if dstUnits[commonUnitSym] == 0: dstUnits.pop(commonUnitSym)
-	
+
 	def reduceUnit(self, reducedUnitSym, unitMap):
 		# Calculate scale factor
 		scaleFactor = 1
@@ -61,10 +67,7 @@ class Convertor:
 			unitMap[sym] += reducedUnitExp * exp
 		
 		# Remove cancelled units
-		toRemove = []
-		for sym, exp in unitMap.items():
-			if exp == 0: toRemove.append(sym)
-		for sym in toRemove: unitMap.pop(sym)
+		removeCancelledUnits(unitMap)
 
 		return scaleFactor
 
@@ -91,6 +94,10 @@ class Convertor:
 				if unitsToReduce[0] in srcUnits: scaleFactor *= self.reduceUnit(unitsToReduce[0], srcUnits)
 				else: scaleFactor /= self.reduceUnit(unitsToReduce[0], dstUnits)
 		
+		# Remove cancelled units
+		removeCancelledUnits(srcUnits)
+		removeCancelledUnits(dstUnits)
+
 		# Check for conversion error
 		if len(srcUnits) > 0 or len(dstUnits) > 0:
 			raise UnitError(f"Invalid conversion: {str(srcUnit)} to {str(dstUnit)}")

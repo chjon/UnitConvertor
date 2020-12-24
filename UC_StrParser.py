@@ -357,7 +357,7 @@ def parseExpr(tokens):
 		else:
 			valStr, unitTokens = token
 			val = float(valStr)
-			baseUnits = parseUnit(unitTokens)
+			baseUnits = UC_Unit.Unit(baseUnits = parseUnit(unitTokens)).reduce()
 			unit = UC_Unit.Unit(baseUnits = baseUnits)
 			stack.append(UC_Unit.Quantity(val, unit))
 	if not stack: return ""
