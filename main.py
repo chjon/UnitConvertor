@@ -4,6 +4,8 @@ import UC_Convertor
 import UC_StrParser
 from UC_Common import *
 
+DEFAULT_FILE = "standard.uc"
+
 COMMAND_EXIT = "exit"
 COMMAND_HELP = "help"
 COMMAND_LOAD = "load"
