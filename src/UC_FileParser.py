@@ -1,3 +1,4 @@
+from decimal import Decimal
 import src.UC_Unit as UC_Unit
 import src.UC_Utils as UC_Utils
 import src.UC_Common as UC_Common
@@ -23,7 +24,7 @@ def parseBaseUnitMap(tokens):
 	UC_Utils.getNextToken(tokens, UC_Common.END_DELIMITER)
 	return baseUnitMap
 
-def parseUnit(units, conversions, tokens, overwrite):
+def parseUnit(units, conversions, tokens, overwrite = False):
 	"""
 	Convert the next series of tokens into a unit
 	@param units: a map of unit symbols to unit objects to be modified
@@ -51,7 +52,7 @@ def parseUnit(units, conversions, tokens, overwrite):
 	# Create unit
 	units[sym] = UC_Unit.Unit(sym, baseUnitMap)
 
-def parsePrefixMapping(prefixes, tokens, base, overwrite):
+def parsePrefixMapping(prefixes, tokens, base, overwrite = False):
 	"""
 	Convert the next series of tokens into a prefix-exponent pair
 	@param prefixes: the prefix-exponent map to modify
@@ -61,9 +62,9 @@ def parsePrefixMapping(prefixes, tokens, base, overwrite):
 	prefix = UC_Utils.getNextToken(tokens)
 	if not overwrite and (prefix in prefixes):
 		raise UC_Common.FileFormatError(f"Duplicate definition of prefix '{prefix}'")
-	prefixes[prefix] = (base, UC_Utils.parseInt(tokens))
+	prefixes[prefix] = (base, Decimal(UC_Utils.parseInt(tokens)))
 
-def parsePrefix(prefixes, tokens, overwrite):
+def parsePrefix(prefixes, tokens, overwrite = False):
 	"""
 	Convert the next series of tokens into prefix-exponent pairs
 	@param prefixes: the prefix-exponent map to modify
@@ -79,7 +80,7 @@ def parsePrefix(prefixes, tokens, overwrite):
 	UC_Utils.getNextToken(tokens, UC_Common.END_DELIMITER)
 
 # Recursive descent parsing
-def parseFile(tokens, units, conversions, prefixes, overwrite):
+def parseFile(tokens, units, conversions, prefixes, overwrite = False):
 	"""
 	Convert a list of tokens into maps of units, conversions, and prefixes
 	@param tokens: a list of tokens

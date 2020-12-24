@@ -22,18 +22,18 @@ def test_conversion(verbose = False):
 
 	units = {
 		"m": Unit("m"),
-		"two_m": Unit("two_m", {"m": 1}),
-		"square_m": Unit("m", {"m": 2}),
-		"L": Unit("L", {"dm": 3}),
+		"two_m": Unit("two_m", {"m": Decimal(1)}),
+		"square_m": Unit("m", {"m": Decimal(2)}),
+		"L": Unit("L", {"dm": Decimal(3)}),
 	}
 	conversions = {
-		"two_m": 2,
-		"square_m": 1,
-		"L": 1
+		"two_m": Decimal(2),
+		"square_m": Decimal(1),
+		"L": Decimal(1)
 	}
 	prefixes = {
-		"d": (10, 2),
-		"c": (10, -2)
+		"d": (Decimal(10), Decimal(2)),
+		"c": (Decimal(10), Decimal(-2))
 	}
 	convertor = Convertor(units, conversions, prefixes)
 
@@ -61,16 +61,16 @@ def test_conversion(verbose = False):
 	test_result += conversion_expect(Unit("m"), Unit(baseUnits = {"cm": 1}), 100, convertor, verbose)
 	test_result += conversion_expect(Unit(baseUnits = {"m": 1}), Unit(baseUnits = {"cm": 1}), 100, convertor, verbose)
 	test_result += conversion_expect(Unit(baseUnits = {"m": 1}), Unit("cm"), 100, convertor, verbose)
-	test_result += conversion_expect(Unit("cm"), Unit("m"), 0.01, convertor, verbose)
-	test_result += conversion_expect(Unit("cm"), Unit(baseUnits = {"m": 1}), 0.01, convertor, verbose)
-	test_result += conversion_expect(Unit(baseUnits = {"cm": 1}), Unit(baseUnits = {"m": 1}), 0.01, convertor, verbose)
-	test_result += conversion_expect(Unit(baseUnits = {"cm": 1}), Unit("m"), 0.01, convertor, verbose)
+	test_result += conversion_expect(Unit("cm"), Unit("m"), Decimal("0.01"), convertor, verbose)
+	test_result += conversion_expect(Unit("cm"), Unit(baseUnits = {"m": 1}), Decimal("0.01"), convertor, verbose)
+	test_result += conversion_expect(Unit(baseUnits = {"cm": 1}), Unit(baseUnits = {"m": 1}), Decimal("0.01"), convertor, verbose)
+	test_result += conversion_expect(Unit(baseUnits = {"cm": 1}), Unit("m"), Decimal("0.01"), convertor, verbose)
 
 	# Test conversion with dependent units
 	test_result += conversion_expect(Unit(baseUnits = {"m": 1, "square_m": -1}), Unit(baseUnits = {"m": -1}), 1, convertor, verbose)
 	test_result += conversion_expect(Unit(baseUnits = {"m": -1, "square_m": 1}), Unit(baseUnits = {"m": 1}), 1, convertor, verbose)
 	test_result += conversion_expect(Unit(baseUnits = {"m": -1, "square_m": 1}), Unit("m"), 1, convertor, verbose)
-	test_result += conversion_expect(Unit(baseUnits = {"m": 1, "square_m": -1}), Unit(baseUnits = {"cm": -1}), 0.01, convertor, verbose)
+	test_result += conversion_expect(Unit(baseUnits = {"m": 1, "square_m": -1}), Unit(baseUnits = {"cm": -1}), Decimal("0.01"), convertor, verbose)
 	test_result += conversion_expect(Unit(baseUnits = {"m": -1, "square_m": 1}), Unit(baseUnits = {"cm": 1}), 100, convertor, verbose)
 	test_result += conversion_expect(Unit(baseUnits = {"m": -1, "square_m": 1}), Unit("cm"), 100, convertor, verbose)
 
@@ -95,11 +95,11 @@ def test_ast(verbose = False):
 
 	units = {
 		"m": Unit("m"),
-		"two_m": Unit("two_m", {"m": 1}),
-		"square_m": Unit("m", {"m": 2}),
+		"two_m": Unit("two_m", {"m": Decimal(1)}),
+		"square_m": Unit("m", {"m": Decimal(2)}),
 	}
-	conversions = {"two_m": 2}
-	prefixes = {"c": (10, -2)}
+	conversions = {"two_m": Decimal(2)}
+	prefixes = {"c": (Decimal(10), Decimal(-2))}
 	convertor = Convertor(units, conversions, prefixes)
 
 	# Test addition of identical units
@@ -145,7 +145,7 @@ def test_ast(verbose = False):
 			Quantity(1, Unit("cm")),
 			Quantity(1, Unit("m"))
 		),
-		Quantity(1.01, Unit("m")),
+		Quantity(Decimal("1.01"), Unit("m")),
 	convertor, verbose)
 
 	return test_result
