@@ -1,3 +1,4 @@
+from decimal import Decimal
 import src.UC_Common as UC_Common
 import src.UC_Utils as UC_Utils
 import src.UC_Unit as UC_Unit
@@ -99,7 +100,7 @@ def convertToRPN(tokens):
 			while operatorStack and operatorStack[-1] != UC_Common.BRACKET_OPEN:
 				outputQueue.append(operatorStack.pop())
 			if operatorStack.pop() != UC_Common.BRACKET_OPEN:
-				raise UnitError(f"Detected mismatched parentheses: '{UC_Common.BRACKET_SHUT}'")
+				raise UC_CommonUnitError(f"Detected mismatched parentheses: '{UC_Common.BRACKET_SHUT}'")
 		elif UC_Utils.isOperator(token):
 			while (
 				operatorStack and
@@ -112,7 +113,7 @@ def convertToRPN(tokens):
 	
 	while operatorStack:
 		if operatorStack[-1] == UC_Common.BRACKET_OPEN:
-			raise UnitError(f"Detected mismatched parentheses: '{UC_Common.BRACKET_OPEN}'")
+			raise UC_CommonUnitError(f"Detected mismatched parentheses: '{UC_Common.BRACKET_OPEN}'")
 		outputQueue.append(operatorStack.pop())
 
 	return outputQueue
@@ -144,7 +145,7 @@ def aggregateSign(tokens, updatedTokens = []):
 	
 	updatedTokens = []
 	aggregateSignHelper(tokens, updatedTokens)
-	if tokens: raise UnitError(f"Detected mismatched parentheses: '{UC_Common.BRACKET_SHUT}'")
+	if tokens: raise UC_Common.UnitError(f"Detected mismatched parentheses: '{UC_Common.BRACKET_SHUT}'")
 	return updatedTokens
 
 def aggregateUnits(tokens):
@@ -356,7 +357,7 @@ def parseExpr(tokens):
 			stack.append(UC_AST.AST_Eql(b, a))
 		else:
 			valStr, unitTokens = token
-			val = float(valStr)
+			val = Decimal(valStr)
 			baseUnits = UC_Unit.Unit(baseUnits = parseUnit(unitTokens)).reduce()
 			unit = UC_Unit.Unit(baseUnits = baseUnits)
 			stack.append(UC_Unit.Quantity(val, unit))

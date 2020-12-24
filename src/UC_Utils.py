@@ -1,3 +1,4 @@
+from decimal import Decimal
 import src.UC_Common as UC_Common
 
 def isValidSymbol(sym):
@@ -110,7 +111,7 @@ def parseFloat(tokens):
 	@return the next token as a float
 	"""
 	scaleFactorStr = getNextToken(tokens)
-	try: scaleFactor = float(scaleFactorStr)
+	try: scaleFactor = Decimal(scaleFactorStr)
 	except: raise UC_Common.UnitError(f"Expected float; received '{scaleFactorStr}'")
 	return scaleFactor
 

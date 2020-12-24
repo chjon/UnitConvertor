@@ -1,3 +1,4 @@
+from decimal import Decimal
 import src.UC_Common as UC_Common
 import src.UC_Utils as UC_Utils
 import src.UC_FileIO as UC_FileIO
@@ -75,9 +76,9 @@ def test_parser(verbose = False):
 
 	# Test the parsing of basic datatypes
 	res = UC_Utils.parseInt(["2"])
-	if res != 2: test_result += test_fail("Incorrectly parsed int", verbose)
+	if res != Decimal("2"): test_result += test_fail("Incorrectly parsed int", verbose)
 	res = UC_Utils.parseFloat(["2.7"])
-	if res != 2.7: test_result += test_fail("Incorrectly parsed float", verbose)
+	if res != Decimal("2.7"): test_result += test_fail("Incorrectly parsed float", verbose)
 	res = UC_Utils.parseSymbol(["sym"])
 	if res != "sym": test_result += test_fail("Incorrectly parsed symbol", verbose)
 
@@ -110,7 +111,7 @@ def test_parser(verbose = False):
 		(units["H"].baseUnits["A"] != 1) or 
 		(units["H"].baseUnits["B"] != 2) or 
 		(len(units["H"].baseUnits) != 2) or
-		(conversions["H"] != 12.4) or
+		(conversions["H"] != Decimal("12.4")) or
 		(len(units) != 2)
 	): test_result += test_fail("Incorrectly parsed derived unit", verbose)
 	try:
