@@ -70,7 +70,7 @@ class AST_Eql:
 		self.right = right
 	
 	def __str__(self):
-		return f"{str(self.left)} : {str(self.right)}"
+		return f"({str(self.left)} : {str(self.right)})"
 
 	def evaluate(self, convertor):
 		leftResult = self.left.evaluate(convertor)

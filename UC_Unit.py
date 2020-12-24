@@ -97,6 +97,7 @@ class Unit:
 		return Unit(baseUnits = Unit(baseUnits = units).reduce())
 
 	def __pow__(self, power):
+		if self.sym: return Unit(baseUnits = {self.sym: power})
 		units = {}
 		for sym, exp in self.baseUnits.items():
 			units[sym] = exp * power
@@ -137,7 +138,7 @@ class Quantity:
 		return Quantity(self.value / other.value, self.unit / other.unit)
 
 	def __pow__(self, other):
-		if other.unit.reduce().baseUnits: raise UC_Common.UnitError(f"Cannot exponentiate with unit '{str(other.unit)}'")
+		if other.unit.reduce(): raise UC_Common.UnitError(f"Cannot exponentiate with unit '{str(other.unit)}'")
 		return Quantity(self.value ** other.value, self.unit ** other.value)
 	
 	def evaluate(self, convertor): return self
