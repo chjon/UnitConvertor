@@ -25,6 +25,7 @@ class Convertor:
 			# Find prefix and base unit
 			prefix, baseUnit = UC_Utils.stripPrefix(self.units, prefixedSym)
 			if len(prefix) == 0: continue
+			if prefix not in self.prefixes: raise UnitError(f"Unknown unit: '{prefixedSym}'")
 			unitsToUpdate[prefixedSym] = baseUnit
 
 			# Calculate scale factor
