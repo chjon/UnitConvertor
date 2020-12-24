@@ -8,6 +8,11 @@ This is a program for performing arithmetic operations while accounting for the 
 ## Commands
 * `exit`: Exit the program
 * `help`: Print help text
+* `show <unit|prefix> [symbol]`: Show currently-loaded definitions
+	* `show unit`: Show all currently-loaded unit definitions
+	* `show unit [symbol]`: Show the definition of the requested symbol (e.g. `show unit mph`)
+	* `show prefix`: Show all currently-loaded prefix definitions
+	* `show prefix [symbol]`: Show the definition of the requested symbol (e.g. `show prefix k`)
 * `load <filename> <mode>`: Load additional definitions from file (e.g. `load misc.uc 2`)
 	* Mode `0`: Unload all currently-loaded definitions before loading file
 	* Mode `1`: Load file and overwrite old definitions with new ones
