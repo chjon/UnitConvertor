@@ -23,13 +23,13 @@ def tokenizeFloat(token, tokens, char, parseFloatState):
 		elif char == '.': parseFloatState = 2
 	elif parseFloatState == 1:
 		if char == '.': parseFloatState = 2
-		elif char == 'e': parseFloatState = 3
+		elif char == 'e' or char == 'E': parseFloatState = 3
 		elif not char.isnumeric():
 			parseFloatState = 0
 			if token: tokens.append(token)
 			token = ""
 	elif parseFloatState == 2:
-		if char == 'e': parseFloatState = 3
+		if char == 'e' or char == 'E': parseFloatState = 3
 		elif not char.isnumeric():
 			parseFloatState = 0
 			if token: tokens.append(token)
@@ -46,7 +46,7 @@ def tokenizeFloat(token, tokens, char, parseFloatState):
 			if token[-1] == '+' or token[-1] == '-':
 				tmp.append(token[-1])
 				token = token[:-1]
-			if token[-1] == 'e':
+			if token[-1] == 'e' or token[-1] == 'E':
 				tmp.append(token[-1])
 				token = token[:-1]
 			if token: tokens.append(token)
