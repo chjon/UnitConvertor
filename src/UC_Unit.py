@@ -37,12 +37,13 @@ class Unit:
 			self.sym = [*baseUnits.keys()][0]
 			self.baseUnits = {}
 
-	def __str__(self):
-		if self.sym: return self.sym
-		outStr = ''
-		for sym, exp in self.baseUnits.items():
-			outStr += f"{sym}{'' if exp == 1 else f'^({exp})'} "
-		return outStr.strip()
+	def __str__(self, showDefinition = False):
+		if (showDefinition and self.baseUnits) or not self.sym:
+			outStr = ''
+			for sym, exp in self.baseUnits.items():
+				outStr += f"{sym}{'' if exp == 1 else f'^({exp})'} "
+			return outStr.strip()
+		return self.sym
 
 	def __eq__(self, other):
 		if other is None: return False

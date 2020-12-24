@@ -19,6 +19,17 @@ class Convertor:
 		base, exp = self.prefixes[prefix]
 		return (base)**(exp)
 
+	def getUnitDefinitionStr(self, string):
+		prefix, sym = UC_Utils.stripPrefix(self.units, string)
+		if prefix: return f"{string} = {self.getPrefixScaleFactor(prefix)} {sym}"
+		else:
+			quantity = self.conversions[sym] if sym in self.conversions else 1
+			return f"1 {string} = {quantity} {self.units[sym].__str__(True)}"
+	
+	def getPrefixDefinitionStr(self, string):
+		base, exp = self.prefixes[string]
+		return f"{string} = ({base})^({exp}) = {base**exp}"
+
 	def processPrefixes(self, units):
 		scaleFactor = Decimal(1)
 		unitsToUpdate = {}

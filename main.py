@@ -3,11 +3,13 @@ import src.UC_FileIO as UC_FileIO
 import src.UC_Convertor as UC_Convertor
 import src.UC_StrParser as UC_StrParser
 import src.UC_Common as UC_Common
+import src.UC_Utils as UC_Utils
 
 DEFAULT_FILE = "standard.uc"
 
 COMMAND_EXIT   = "exit"
 COMMAND_HELP   = "help"
+COMMAND_SHOW   = "show"
 COMMAND_LOAD   = "load"
 COMMAND_SAVE   = "save"
 COMMAND_UNLOAD = "unload"
@@ -18,6 +20,7 @@ def command_help(args):
 	helpStrings = {
 		COMMAND_EXIT  : "Exit the program",
 		COMMAND_HELP  : "Print this text",
+		COMMAND_SHOW  : "Show currently-loaded definitions",
 		COMMAND_LOAD  : "Load additional definitions from file",
 		COMMAND_SAVE  : "Save currently-loaded definitions to file",
 		COMMAND_UNLOAD: "Unload all currently-loaded definitions",
@@ -36,6 +39,24 @@ def command_help(args):
 	print("Example input:")
 	for example in inputExamples: print(f"{INDENT}{example}")
 	print("--------------------------")
+
+def command_show(args):
+	usage = f"Usage: {COMMAND_SHOW} <unit|prefix> [symbol]"
+	global convertor
+	if len(args) < 2 or len(args) > 3: print(usage)
+	elif args[1] == "unit":
+		if len(args) > 2:
+			try: print(convertor.getUnitDefinitionStr(args[2]))
+			except: print(f"Unit '{args[2]}' is not defined")
+		else:
+			for sym in convertor.units.keys(): print(convertor.getUnitDefinitionStr(sym))
+	elif args[1] == "prefix":
+		if len(args) > 2:
+			try: print(convertor.getPrefixDefinitionStr(args[2]))
+			except: print(f"Prefix '{args[2]}' is not defined")
+		else:
+			for sym in convertor.prefixes.keys(): print(convertor.getPrefixDefinitionStr(sym))
+	else: print(usage)
 
 def command_load(args):
 	validModes = {
@@ -78,6 +99,7 @@ def command_save(args):
 commands = {
 	COMMAND_EXIT  : (lambda args: exit()),
 	COMMAND_HELP  : (lambda args: command_help(args)),
+	COMMAND_SHOW  : (lambda args: command_show(args)),
 	COMMAND_LOAD  : (lambda args: command_load(args)),
 	COMMAND_SAVE  : (lambda args: command_save(args)),
 	COMMAND_UNLOAD: (lambda args: command_unload(args)),
