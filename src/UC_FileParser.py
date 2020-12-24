@@ -1,6 +1,6 @@
-from UC_Unit import *
-from UC_Utils import *
-from UC_Common import *
+import src.UC_Unit as UC_Unit
+import src.UC_Utils as UC_Utils
+import src.UC_Common as UC_Common
 
 def parseBaseUnitMap(tokens):
 	"""
@@ -10,17 +10,17 @@ def parseBaseUnitMap(tokens):
 	"""
 	baseUnitMap = {}
 
-	baseSym = parseSymbol(tokens)
+	baseSym = UC_Utils.parseSymbol(tokens)
 	if baseSym not in baseUnitMap: baseUnitMap[baseSym] = 0
-	baseUnitMap[baseSym] += parseInt(tokens)
+	baseUnitMap[baseSym] += UC_Utils.parseInt(tokens)
 
-	while peekNextToken(tokens) == SEP_DELIMITER:
-		getNextToken(tokens)
-		baseSym = parseSymbol(tokens)
+	while UC_Utils.peekNextToken(tokens) == UC_Common.SEP_DELIMITER:
+		UC_Utils.getNextToken(tokens)
+		baseSym = UC_Utils.parseSymbol(tokens)
 		if baseSym not in baseUnitMap: baseUnitMap[baseSym] = 0
-		baseUnitMap[baseSym] += parseInt(tokens)
+		baseUnitMap[baseSym] += UC_Utils.parseInt(tokens)
 
-	getNextToken(tokens, END_DELIMITER)
+	UC_Utils.getNextToken(tokens, UC_Common.END_DELIMITER)
 	return baseUnitMap
 
 def parseUnit(units, conversions, tokens):
@@ -33,22 +33,22 @@ def parseUnit(units, conversions, tokens):
 	baseUnitMap = {}
 
 	# Handle base unit
-	sym = parseSymbol(tokens)
-	if sym in units: raise FileFormatError(f"Duplicate definition of unit '{sym}'")
+	sym = UC_Utils.parseSymbol(tokens)
+	if sym in units: raise UC_Common.FileFormatError(f"Duplicate definition of unit '{sym}'")
 
 	# Handle derived unit
-	nextToken = getNextToken(tokens)
-	if nextToken == MAP_DELIMITER:
-		scaleFactor = parseFloat(tokens)
-		getNextToken(tokens, SEP_DELIMITER)
+	nextToken = UC_Utils.getNextToken(tokens)
+	if nextToken == UC_Common.MAP_DELIMITER:
+		scaleFactor = UC_Utils.parseFloat(tokens)
+		UC_Utils.getNextToken(tokens, UC_Common.SEP_DELIMITER)
 		baseUnitMap = parseBaseUnitMap(tokens)
 		conversions[sym] = scaleFactor
 	
 	# Handle other tokens
-	elif nextToken != END_DELIMITER: raise FileFormatError(f"Expected delimiter; received '{nextToken}'")
+	elif nextToken != UC_Common.END_DELIMITER: raise UC_Common.FileFormatError(f"Expected delimiter; received '{nextToken}'")
 
 	# Create unit
-	units[sym] = Unit(sym, baseUnitMap)
+	units[sym] = UC_Unit.Unit(sym, baseUnitMap)
 
 def parsePrefixMapping(prefixes, tokens, base):
 	"""
@@ -57,9 +57,9 @@ def parsePrefixMapping(prefixes, tokens, base):
 	@param tokens: a list of tokens
 	@param base: the base for the exponent
 	"""
-	prefix = getNextToken(tokens)
-	if prefix in prefixes: raise FileFormatError(f"Duplicate definition of prefix '{prefix}'")
-	prefixes[prefix] = (base, parseInt(tokens))
+	prefix = UC_Utils.getNextToken(tokens)
+	if prefix in prefixes: raise UC_Common.FileFormatError(f"Duplicate definition of prefix '{prefix}'")
+	prefixes[prefix] = (base, UC_Utils.parseInt(tokens))
 
 def parsePrefix(prefixes, tokens):
 	"""
@@ -67,14 +67,14 @@ def parsePrefix(prefixes, tokens):
 	@param prefixes: the prefix-exponent map to modify
 	@param tokens: a list of tokens
 	"""
-	base = parseFloat(tokens)
-	getNextToken(tokens, MAP_DELIMITER)
+	base = UC_Utils.parseFloat(tokens)
+	UC_Utils.getNextToken(tokens, UC_Common.MAP_DELIMITER)
 
 	parsePrefixMapping(prefixes, tokens, base)
-	while peekNextToken(tokens) == SEP_DELIMITER:
-		getNextToken(tokens)
+	while UC_Utils.peekNextToken(tokens) == UC_Common.SEP_DELIMITER:
+		UC_Utils.getNextToken(tokens)
 		parsePrefixMapping(prefixes, tokens, base)	
-	getNextToken(tokens, END_DELIMITER)
+	UC_Utils.getNextToken(tokens, UC_Common.END_DELIMITER)
 
 # Recursive descent parsing
 def parseFile(tokens):
@@ -89,10 +89,8 @@ def parseFile(tokens):
 	conversions = {}
 	prefixes = {}
 	while len(tokens):
-		if isValidSymbol(tokens[0]):
-			parseUnit(units, conversions, tokens)
-		else:
-			parsePrefix(prefixes, tokens)
+		if UC_Utils.isValidSymbol(tokens[0]): parseUnit(units, conversions, tokens)
+		else: parsePrefix(prefixes, tokens)
 
 	# Return result of parsing
 	return units, conversions, prefixes

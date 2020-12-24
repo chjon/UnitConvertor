@@ -1,7 +1,8 @@
-from UC_Common import *
-import UC_FileIO
-import UC_FileParser
-import UC_FileSerializer
+import src.UC_Common as UC_Common
+import src.UC_Utils as UC_Utils
+import src.UC_FileIO as UC_FileIO
+import src.UC_FileParser as UC_FileParser
+import src.UC_FileSerializer as UC_FileSerializer
 
 def test_fail(msg, verbose):
 	if verbose: print(f"Test failed: {msg}")
@@ -64,20 +65,20 @@ def test_parser(verbose = False):
 
 	# Test token queue
 	tokens = ["A1", "B2", "C3"]
-	if UC_FileParser.getNextToken(tokens) != "A1": test_result += test_fail("Failed to get expected symbol", verbose)
-	if UC_FileParser.getNextToken(tokens) != "B2": test_result += test_fail("Failed to get expected symbol", verbose)
-	if UC_FileParser.getNextToken(tokens) != "C3": test_result += test_fail("Failed to get expected symbol", verbose)
+	if UC_Utils.getNextToken(tokens) != "A1": test_result += test_fail("Failed to get expected symbol", verbose)
+	if UC_Utils.getNextToken(tokens) != "B2": test_result += test_fail("Failed to get expected symbol", verbose)
+	if UC_Utils.getNextToken(tokens) != "C3": test_result += test_fail("Failed to get expected symbol", verbose)
 	try:
-		token = UC_FileParser.getNextToken(tokens)
+		token = UC_Utils.getNextToken(tokens)
 		test_result += test_fail(f"Received unexpected token {token}", verbose)
 	except: pass
 
 	# Test the parsing of basic datatypes
-	res = UC_FileParser.parseInt(["2"])
+	res = UC_Utils.parseInt(["2"])
 	if res != 2: test_result += test_fail("Incorrectly parsed int", verbose)
-	res = UC_FileParser.parseFloat(["2.7"])
+	res = UC_Utils.parseFloat(["2.7"])
 	if res != 2.7: test_result += test_fail("Incorrectly parsed float", verbose)
-	res = UC_FileParser.parseSymbol(["sym"])
+	res = UC_Utils.parseSymbol(["sym"])
 	if res != "sym": test_result += test_fail("Incorrectly parsed symbol", verbose)
 
 	# Test the parsing of unit dependencies

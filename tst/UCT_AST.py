@@ -1,6 +1,6 @@
-from UC_AST import *
-from UC_Unit import *
-from UC_Convertor import Convertor
+from src.UC_AST import *
+from src.UC_Unit import *
+from src.UC_Convertor import *
 
 def test_fail(msg, verbose):
 	if verbose: print(f"Test failed: {msg}")

@@ -1,4 +1,4 @@
-from UC_Common import *
+import src.UC_Common as UC_Common
 
 def serializePrefixes(prefixes):
 	"""
@@ -16,10 +16,10 @@ def serializePrefixes(prefixes):
 	
 	# Serialize prefixes
 	for base, prefixMapping in aggregatedPrefixes.items():
-		line = f"{base}{MAP_DELIMITER}"
+		line = f"{base}{UC_Common.MAP_DELIMITER}"
 		for prefix, exp in prefixMapping.items():
-			line += f"{prefix} {exp}{SEP_DELIMITER}"
-		lines.append(f"{line[0:-1]}{END_DELIMITER}")
+			line += f"{prefix} {exp}{UC_Common.SEP_DELIMITER}"
+		lines.append(f"{line[0:-1]}{UC_Common.END_DELIMITER}")
 
 	return lines
 
@@ -33,14 +33,14 @@ def serializeUnitConversions(units, conversions):
 	lines = []
 
 	for sym, unit in units.items():
-		line = f"{sym}{MAP_DELIMITER}"
+		line = f"{sym}{UC_Common.MAP_DELIMITER}"
 
 		# Add conversion for derived units
 		if sym in conversions:
-			line += f"{conversions[sym]}{SEP_DELIMITER}"
+			line += f"{conversions[sym]}{UC_Common.SEP_DELIMITER}"
 			for baseUnit, exp in unit.baseUnits.items():
-				line += f"{baseUnit} {exp}{SEP_DELIMITER}"
+				line += f"{baseUnit} {exp}{UC_Common.SEP_DELIMITER}"
 
-		lines.append(f"{line[0:-1]}{END_DELIMITER}")
+		lines.append(f"{line[0:-1]}{UC_Common.END_DELIMITER}")
 	
 	return lines

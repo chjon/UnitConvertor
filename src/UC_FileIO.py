@@ -1,7 +1,7 @@
-import UC_Common
-import UC_FileParser
-import UC_FileSerializer
-import UC_Utils
+import src.UC_Common as UC_Common
+import src.UC_FileParser as UC_FileParser
+import src.UC_FileSerializer as UC_FileSerializer
+import src.UC_Utils as UC_Utils
 
 def tokenize(lines: list = []):
 	"""

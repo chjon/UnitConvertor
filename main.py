@@ -1,8 +1,8 @@
 import fileinput
-import UC_FileIO
-import UC_Convertor
-import UC_StrParser
-from UC_Common import *
+import src.UC_FileIO as UC_FileIO
+import src.UC_Convertor as UC_Convertor
+import src.UC_StrParser as UC_StrParser
+import src.UC_Common as UC_Common
 
 DEFAULT_FILE = "standard.uc"
 
@@ -43,7 +43,7 @@ def command_load(args):
 			global convertor
 			convertor = UC_Convertor.Convertor(units, conversions, prefixes)
 			print(f"Successfully loaded definitions from '{args[1]}'")
-		except: print(f"Encountered error while loading from '{args[1]}'")
+		except OSError as Err: print(f"Encountered error while loading from '{args[1]}': {err}")
 
 def command_save(args):
 	if len(args) != 2: print("Usage: save <filename>")
@@ -51,7 +51,7 @@ def command_save(args):
 		try:
 			UC_FileIO.writeFile(args[1], convertor.units, convertor.conversions, convertor.prefixes)
 			print(f"Successfully saved definitions to '{args[1]}'")
-		except: print(f"Encountered error while saving to '{args[1]}'")
+		except OSError as err: print(f"Encountered error while saving to '{args[1]}': {err}")
 
 commands = {
 	COMMAND_EXIT: (lambda args: exit()),
@@ -72,7 +72,7 @@ def main():
 				ast = UC_StrParser.parse(line)
 				print(f"Interpreting input as: '{str(ast)}'")
 				print(f"{INDENT}{str(ast.evaluate(convertor))}")
-			except UnitError as err:
+			except UC_Common.UnitError as err:
 				print(f"{INDENT}Error: {err}")
 			finally: print()
 

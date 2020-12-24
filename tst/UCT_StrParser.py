@@ -1,4 +1,4 @@
-import UC_StrParser
+import src.UC_StrParser as UC_StrParser
 
 def test_fail(msg, verbose):
 	if verbose: print(f"Test failed: {msg}")

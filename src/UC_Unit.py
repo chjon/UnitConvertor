@@ -1,4 +1,4 @@
-import UC_Common
+import src.UC_Common as UC_Common
 
 class Unit:
 	def isBaseUnit(self):

@@ -1,6 +1,6 @@
-from UC_Unit import *
-from UC_Common import *
-import UC_Utils
+import src.UC_Unit as UC_Unit
+import src.UC_Common as UC_Common
+import src.UC_Utils as UC_Utils
 
 def removeCancelledUnits(unitMap):
 	toRemove = []
