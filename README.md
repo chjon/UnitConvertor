@@ -8,12 +8,11 @@ This is a program for performing arithmetic operations while accounting for the 
 ## Commands
 * `exit`: Exit the program
 * `help`: Print help text
-* `load <filename> <mode>`: Load additional definitions from file
-	* Modes:
-		* `0`: Unload all currently-loaded definitions before loading file
-		* `1`: Load file and overwrite old definitions with new ones
-		* `2`: Load file but do not overwrite old definitions
-* `save <filename>`: Save currently-loaded definitions to file
+* `load <filename> <mode>`: Load additional definitions from file (e.g. `load misc.uc 2`)
+	* Mode `0`: Unload all currently-loaded definitions before loading file
+	* Mode `1`: Load file and overwrite old definitions with new ones
+	* Mode `2`: Load file but do not overwrite old definitions
+* `save <filename>`: Save currently-loaded definitions to file (e.g. `save customUnits.uc`)
 * `unload`: Unload all currently-loaded definitions
 
 ## Expressions
