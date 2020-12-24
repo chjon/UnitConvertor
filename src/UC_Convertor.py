@@ -21,7 +21,9 @@ class Convertor:
 
 	def getUnitDefinitionStr(self, string):
 		prefix, sym = UC_Utils.stripPrefix(self.units, string)
-		if prefix: return f"1 {string} = {self.getPrefixScaleFactor(prefix)} {sym}"
+		if prefix:
+			scaleFactor = self.getPrefixScaleFactor(prefix)
+			return f"1 {string} = prefix: '{prefix}', unit: '{sym}' = {scaleFactor} {sym}"
 		else:
 			quantity = self.conversions[sym] if sym in self.conversions else 1
 			return f"1 {string} = {quantity} {self.units[sym].__str__(True)}"
