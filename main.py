@@ -85,7 +85,7 @@ def command_add(args):
 		string = " ".join(args[3:]) if len(args) > 3 else ""
 		try:
 			ast = UC_StrParser.parse(string)
-			print(f"Interpreting input as: 1 {sym} = {str(ast)}")
+			print(f"Interpreting input as: {sym} = {str(ast)}")
 			quantity = ast.evaluate(convertor)
 			convertor.addUnit(sym, quantity.value, quantity.unit)
 			print(f"Successfully added unit: {convertor.getUnitDefinitionStr(sym)}")

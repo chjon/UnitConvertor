@@ -120,6 +120,8 @@ class Convertor:
 		return scaleFactor
 	
 	def addUnit(self, sym, scaleFactor, unit):
+		if not UC_Utils.isValidSymbol(sym):
+			raise UC_Common.UnitError(f"Invalid symbol '{sym}': valid unit symbols are composed of alphabetical characters and underscores")
 		if sym in self.units:
 			quantity = self.conversions[sym] if sym in self.conversions else 1
 			raise UC_Common.UnitError(f"Unit '{sym}' already exists: {self.getUnitDefinitionStr(sym)}")
@@ -136,6 +138,8 @@ class Convertor:
 			self.conversions = conversions
 	
 	def addPrefix(self, sym, base, exp):
+		if not UC_Utils.isValidSymbol(sym):
+			raise UC_Common.UnitError(f"Invalid prefix '{sym}': valid prefix symbols are composed of alphabetical characters and underscores")
 		if sym in self.prefixes:
 			base, exp = self.prefixes[sym]
 			raise UC_Common.UnitError(f"Prefix '{sym}' already exists: '{sym}' = {base}^{exp} = {base**exp}")
