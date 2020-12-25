@@ -1,3 +1,4 @@
+from decimal import Decimal
 import fileinput
 import src.UC_FileIO as UC_FileIO
 import src.UC_Convertor as UC_Convertor
