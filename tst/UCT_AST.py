@@ -95,6 +95,7 @@ def test_ast(verbose = False):
 
 	units = {
 		"m": Unit("m"),
+		"h": Unit("h"),
 		"two_m": Unit("two_m", {"m": Decimal(1)}),
 		"square_m": Unit("m", {"m": Decimal(2)}),
 	}
@@ -112,10 +113,10 @@ def test_ast(verbose = False):
 	convertor, verbose)
 	test_result += ast_expect(
 		AST_Add(
-			Quantity(1, Unit(baseUnits = {"m", 2})),
-			Quantity(1, Unit(baseUnits = {"m", 2}))
+			Quantity(1, Unit(baseUnits = {"m": 2})),
+			Quantity(1, Unit(baseUnits = {"m": 2}))
 		),
-		Quantity(2, Unit(baseUnits = {"m", 2})),
+		Quantity(2, Unit(baseUnits = {"m": 2})),
 	convertor, verbose)
 
 	# Test addition of compatible units
@@ -146,6 +147,20 @@ def test_ast(verbose = False):
 			Quantity(1, Unit("m"))
 		),
 		Quantity(Decimal("1.01"), Unit("m")),
+	convertor, verbose)
+	test_result += ast_expect(
+		AST_Add(
+			Quantity(1, Unit(baseUnits = {"m": 1, "h": -1})),
+			Quantity(1, Unit(baseUnits = {"cm": 1, "h": -1}))
+		),
+		Quantity(Decimal("101"), Unit(baseUnits = {"cm": 1, "h": -1})),
+	convertor, verbose)
+	test_result += ast_expect(
+		AST_Add(
+			Quantity(1, Unit(baseUnits = {"cm": 1, "h": -1})),
+			Quantity(1, Unit(baseUnits = {"m": 1, "h": -1}))
+		),
+		Quantity(Decimal("1.01"), Unit(baseUnits = {"m": 1, "h": -1})),
 	convertor, verbose)
 
 	return test_result

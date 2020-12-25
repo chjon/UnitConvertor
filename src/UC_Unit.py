@@ -47,7 +47,7 @@ class Unit:
 
 	def __eq__(self, other):
 		if other is None: return False
-		if self.sym == other.sym: return True
+		if self.sym and self.sym == other.sym: return True
 		selfUnits = self.reduce()
 		otherUnits = other.reduce()
 		if len(selfUnits) != len(otherUnits): return False
