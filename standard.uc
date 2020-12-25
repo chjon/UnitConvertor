@@ -59,10 +59,8 @@ kat: 1, mol  1,  s -1;
 # SI-compatible #
 #################
 
-# bel
-# B;
-# barn
-# b:          100,  fm 2;
+B;
+b:            100,  fm 2;
 min:           60,   s 1;
 h  :           60, min 1;
 day:           24,   h 1;
@@ -84,14 +82,15 @@ rem          :       1,           cSv 1;
 ##########
 # Non-SI #
 ##########
-lb : 0.453592, kg  1;
-in :   0.0254,  m  1;
-ft :       12, in  1;
-yd :        3, ft  1;
-mi :   1760.0, yd  1;
-mph:        1, mi  1, h -1;
-kph:        1, km  1, h -1;
-BMI:        1, kg  1, m -2;
+lb_mass : 0.453592, kg  1;
+lb      :        1, lb_mass 1;
+in      :   0.0254,  m  1;
+ft      :       12, in  1;
+yd      :        3, ft  1;
+mi      :   1760.0, yd  1;
+mph     :        1, mi  1, h -1;
+kph     :        1, km  1, h -1;
+BMI     :        1, kg  1, m -2;
 
 ###############
 # Information #
@@ -109,7 +108,7 @@ Mi 20,
 Ki 10;
 
 # Units #
-b;                   # bits
-bps: 1.0, b 1, s -1; # bits per second
-B  : 8, b 1;       # bytes
-Bps: 1, B 1, s -1; # bytes per second
+bit;                   # bits
+bps  : 1.0, b 1, s -1; # bits per second
+byte : 8, b 1;         # bytes
+Bps  : 1, B 1, s -1;   # bytes per second

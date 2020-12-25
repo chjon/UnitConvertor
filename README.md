@@ -47,6 +47,7 @@ This is a program for performing arithmetic operations while accounting for the 
 ## Supported Unit Conversions
 The default units and unit conversions are specified in the `standard.uc` data file.
 This contains the SI base units, SI derived units, units approved for use with the SI units, and a collection of non-SI units.
+The full names of the units whose symbols appear in `standard.uc` are included in the `alias.uc` data file.
 Conversions between temperature units are currently unsupported.
 
 Additional units and unit conversions are specified in the `misc.uc` data file, which is an extension to `standard.uc`.
