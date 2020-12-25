@@ -8,6 +8,7 @@ This is a program for performing arithmetic operations while accounting for the 
 ## Commands
 * `exit`: Exit the program
 * `help`: Print help text
+* `eval <filename>`: Evaluate an expression from file (e.g. `eval example.txt`)
 * `show <unit|prefix> [symbol]`: Show currently-loaded definitions
 	* `show unit`: Show all currently-loaded unit definitions
 	* `show unit [symbol]`: Show the definition of the requested symbol (e.g. `show unit mph`)
