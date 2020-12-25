@@ -76,7 +76,6 @@ nautical_mile:    1852,             m 1;
 knot         :       1, nautical_mile 1,  h -1;
 a            :       1,           dam 2;
 bar          :     100,           kPa 1;
-Å            :     0.1,            nm 1;
 Ci           :  3.7e10,            Bq 1;
 R            : 2.58e-4,             C 1, kg -1;
 rad          :       1,           cGy 1;
