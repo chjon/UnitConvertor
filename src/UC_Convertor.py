@@ -122,8 +122,9 @@ class Convertor:
 	def addUnit(self, sym, scaleFactor, unit):
 		if sym in self.units:
 			quantity = self.conversions[sym] if sym in self.conversions else 1
-			raise UnitError(f"Unit '{sym}' already exists: {self.getUnitDefinitionStr(sym)}")
+			raise UC_Common.UnitError(f"Unit '{sym}' already exists: {self.getUnitDefinitionStr(sym)}")
 		else:
+			# Try adding unit
 			units = self.units.copy()
 			units[sym] = UC_Unit.Unit(sym, unit.reduce())
 			conversions = self.conversions.copy()
@@ -137,11 +138,68 @@ class Convertor:
 	def addPrefix(self, sym, base, exp):
 		if sym in self.prefixes:
 			base, exp = self.prefixes[sym]
-			raise UnitError(f"Prefix '{sym}' already exists: '{sym}' = {base}^{exp} = {base**exp}")
+			raise UC_Common.UnitError(f"Prefix '{sym}' already exists: '{sym}' = {base}^{exp} = {base**exp}")
 		else:
+			# Try adding prefix
 			prefixes = self.prefixes.copy()
 			prefixes[sym] = (base, exp)
 
 			# Check that all dependencies exist and check for an acyclic dependency graph
 			UC_Utils.validate(self.units, self.conversions, prefixes)
 			self.prefixes = prefixes
+
+	def delUnit(self, symToDelete):
+		if symToDelete in self.units:
+			unitsToDelete = {symToDelete}
+
+			# Find all units to delete
+			foundDependentUnit = True
+			while foundDependentUnit:
+				foundDependentUnit = False
+				for sym, unit in self.units.items():
+					if sym in unitsToDelete: continue
+					for dependencySym in unit.baseUnits.keys():
+						prefix, baseSym = UC_Utils.stripPrefix(self.units, dependencySym)
+						if baseSym in unitsToDelete:
+							unitsToDelete.add(sym)
+							foundDependentUnit = True
+							break
+
+			# Delete all units which need to be deleted
+			for sym in unitsToDelete:
+				del self.units[sym]
+				if sym in self.conversions: del self.conversions[sym]
+			
+			return unitsToDelete
+		else:
+			try: unitDefStr = self.getUnitDefinitionStr(symToDelete)
+			except: raise UC_Common.UnitError(f"Cannot delete '{symToDelete}' - unit does not exist")
+			raise UC_Common.UnitError(f"Cannot delete '{symToDelete}' - unit contains a prefix: {unitDefStr}")
+	
+	def delPrefix(self, symToDelete):
+		if symToDelete in self.prefixes:
+			unitsToDelete = set()
+
+			# Find all units to delete
+			foundDependentUnit = True
+			while foundDependentUnit:
+				foundDependentUnit = False
+				for sym, unit in self.units.items():
+					if sym in unitsToDelete: continue
+					for dependencySym in unit.baseUnits.keys():
+						prefix, baseSym = UC_Utils.stripPrefix(self.units, dependencySym)
+						if prefix == symToDelete or baseSym in unitsToDelete:
+							unitsToDelete.add(sym)
+							foundDependentUnit = True
+							break
+
+			# Delete all units which need to be deleted
+			for sym in unitsToDelete:
+				del self.units[sym]
+				if sym in self.conversions: del self.conversions[sym]
+			
+			# Delete from prefix map
+			del self.prefixes[symToDelete]
+
+			return unitsToDelete
+		else: raise UC_Common.UnitError(f"Cannot delete '{symToDelete}' - prefix does not exist") 
