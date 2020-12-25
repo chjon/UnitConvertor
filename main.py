@@ -9,6 +9,7 @@ DEFAULT_FILE = "standard.uc"
 
 COMMAND_EXIT   = "exit"
 COMMAND_HELP   = "help"
+COMMAND_EVAL   = "eval"
 COMMAND_SHOW   = "show"
 COMMAND_ADD    = "add"
 COMMAND_DEL    = "del"
@@ -22,6 +23,7 @@ def command_help(args):
 	helpStrings = {
 		COMMAND_EXIT  : "Exit the program",
 		COMMAND_HELP  : "Print this text",
+		COMMAND_EVAL  : "Evaluate an expression from file",
 		COMMAND_SHOW  : "Show currently-loaded definitions",
 		COMMAND_ADD   : "Add a unit/prefix definition",
 		COMMAND_DEL   : "Delete a unit/prefix definition and all definitions which depend on it",
@@ -43,6 +45,18 @@ def command_help(args):
 	print("Example input:")
 	for example in inputExamples: print(f"{INDENT}{example}")
 	print("--------------------------")
+
+def command_eval(args):
+	if len(args) == 2:
+		try:
+			file = open(args[1], 'r')
+			line = " ".join(file.readlines())
+			file.close()
+			ast = UC_StrParser.parse(line)
+			print(f"Interpreting input as: '{str(ast)}'")
+			print(f"{INDENT}{str(ast.evaluate(convertor))}")
+		except (OSError, UC_Common.UnitError) as err: print(err)
+	else: print(f"Usage: {COMMAND_EVAL} <filename>")
 
 def command_show(args):
 	usage = f"Usage: {COMMAND_SHOW} <unit|prefix> [symbol]"
@@ -149,6 +163,7 @@ def command_save(args):
 commands = {
 	COMMAND_EXIT  : (lambda args: exit()),
 	COMMAND_HELP  : (lambda args: command_help(args)),
+	COMMAND_EVAL  : (lambda args: command_eval(args)),
 	COMMAND_SHOW  : (lambda args: command_show(args)),
 	COMMAND_ADD   : (lambda args: command_add(args)),
 	COMMAND_DEL   : (lambda args: command_del(args)),
