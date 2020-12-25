@@ -10,6 +10,8 @@ DEFAULT_FILE = "standard.uc"
 COMMAND_EXIT   = "exit"
 COMMAND_HELP   = "help"
 COMMAND_SHOW   = "show"
+COMMAND_ADD    = "add"
+COMMAND_DEL    = "del"
 COMMAND_LOAD   = "load"
 COMMAND_SAVE   = "save"
 COMMAND_UNLOAD = "unload"
@@ -21,6 +23,8 @@ def command_help(args):
 		COMMAND_EXIT  : "Exit the program",
 		COMMAND_HELP  : "Print this text",
 		COMMAND_SHOW  : "Show currently-loaded definitions",
+		COMMAND_ADD   : "Add a unit/prefix definition",
+		COMMAND_DEL   : "Delete a unit/prefix definition and all definitions which depend on it",
 		COMMAND_LOAD  : "Load additional definitions from file",
 		COMMAND_SAVE  : "Save currently-loaded definitions to file",
 		COMMAND_UNLOAD: "Unload all currently-loaded definitions",
@@ -56,6 +60,52 @@ def command_show(args):
 			except: print(f"Prefix '{args[2]}' is not defined")
 		else:
 			for sym in convertor.prefixes.keys(): print(convertor.getPrefixDefinitionStr(sym))
+	else: print(usage)
+
+def command_add(args):
+	usage = f"Usage: {COMMAND_ADD} <unit|prefix> <symbol> [definition]"
+	global convertor
+	if len(args) < 3: print(usage)
+	elif args[1] == "unit":
+		sym = args[2]
+		string = " ".join(args[3:]) if len(args) > 3 else ""
+		try:
+			ast = UC_StrParser.parse(string)
+			print(f"Interpreting input as: 1 {sym} = {str(ast)}")
+			quantity = ast.evaluate(convertor)
+			convertor.addUnit(sym, quantity.value, quantity.unit)
+			print(f"Successfully added unit: {convertor.getUnitDefinitionStr(sym)}")
+		except UC_Common.UnitError as err: print(err)
+	elif args[1] == "prefix":
+		if len(args) == 5:
+			sym = args[2]
+			try: base = Decimal(args[3])
+			except: return print(f"Expected float; received {args[3]}")
+			try: exp = Decimal(int(args[4]))
+			except: return print(f"Expected int; received {args[4]}")
+			try:
+				convertor.addPrefix(sym, base, exp)
+				print(f"Successfully added prefix: {convertor.getPrefixDefinitionStr(sym)}")
+			except UC_Common.UnitError as err: return print(err)
+		else: print(f"Usage: {COMMAND_ADD} prefix {args[2]} <base> <exponent>")
+	else: print(usage)
+
+def command_del(args):
+	usage = f"Usage: {COMMAND_DEL} <unit|prefix> <symbol>"
+	global convertor
+	if len(args) != 3: print(usage)
+	elif args[1] == "unit":
+		sym = args[2]
+		try:
+			deletedUnits = convertor.delUnit(sym)
+			print(f"Successfully deleted unit(s): {deletedUnits}")
+		except UC_Common.UnitError as err: return print(err)
+	elif args[1] == "prefix":
+		sym = args[2]
+		try:
+			deletedUnits = convertor.delPrefix(sym)
+			print(f"Successfully deleted prefix: '{sym}' and units: {deletedUnits}")
+		except UC_Common.UnitError as err: return print(err)
 	else: print(usage)
 
 def command_load(args):
@@ -100,6 +150,8 @@ commands = {
 	COMMAND_EXIT  : (lambda args: exit()),
 	COMMAND_HELP  : (lambda args: command_help(args)),
 	COMMAND_SHOW  : (lambda args: command_show(args)),
+	COMMAND_ADD   : (lambda args: command_add(args)),
+	COMMAND_DEL   : (lambda args: command_del(args)),
 	COMMAND_LOAD  : (lambda args: command_load(args)),
 	COMMAND_SAVE  : (lambda args: command_save(args)),
 	COMMAND_UNLOAD: (lambda args: command_unload(args)),

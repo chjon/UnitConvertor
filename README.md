@@ -13,6 +13,12 @@ This is a program for performing arithmetic operations while accounting for the 
 	* `show unit [symbol]`: Show the definition of the requested symbol (e.g. `show unit mph`)
 	* `show prefix`: Show all currently-loaded prefix definitions
 	* `show prefix [symbol]`: Show the definition of the requested symbol (e.g. `show prefix k`)
+* `add <unit|prefix> <symbol> [definition]`: Add a unit/prefix definition
+	* `add unit <symbol> [definition]`: Define a new unit with the given symbol, equal to the result of evaluating the given definition (e.g. `add unit in 2.54 cm`)
+	* `add prefix <symbol> <base> <exp>`: Define a new prefix with the given symbol, equal to multiplying by the given power of the given base (e.g. `add prefix k 10 3`)
+* `del <unit|prefix> <symbol>`: Delete a unit/prefix definition and all definitions which depend on it
+	* `del unit <symbol>`: Delete the unit with the given symbol, as well as all units whose definitions depend on it
+	* `del prefix <symbol>`: Delete the prefix with the given symbol, as well as all units whose definitions depend on it
 * `load <filename> <mode>`: Load additional definitions from file (e.g. `load misc.uc 2`)
 	* Mode `0`: Unload all currently-loaded definitions before loading file
 	* Mode `1`: Load file and overwrite old definitions with new ones
